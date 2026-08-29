@@ -11,7 +11,7 @@ The product must not depend on a specific event name, official catalog service, 
 ### Event
 
 - Create and manage events.
-- Fields: name, event date, venue, memo, planned budget.
+- Fields: name, event date, venue, memo. Planned budget is deferred to Phase 5 database work.
 - The app must accept any event name supplied by the user.
 
 ### Circle
@@ -19,11 +19,11 @@ The product must not depend on a specific event name, official catalog service, 
 - Register target circles per event.
 - Fields: circle name, space number, X URL, web URL, memo, priority, assignee, visit status.
 - Priority values:
-  - `must_go`: 最優先
-  - `want_to_go`: 行きたい
+  - `must`: 最優先
+  - `want`: 行きたい
   - `if_time`: 時間があれば
 - Visit status values:
-  - `not_visited`: 未訪問
+  - `unvisited`: 未訪問
   - `purchased`: 購入済み
   - `sold_out`: 売り切れ
   - `skipped`: スキップ
