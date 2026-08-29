@@ -1,12 +1,16 @@
 # Database Design
 
-The first Supabase schema should model ownership explicitly and rely on RLS for tenant isolation.
+The first Supabase schema should model ownership explicitly and rely on RLS for tenant isolation. Phase 1 keeps the schema small and does not add tables or columns only for later phases.
 
 ## Entities
 
 ### users
 
 Use `auth.users`. Do not create a duplicate user table unless profile fields become necessary.
+
+### profiles
+
+Do not add this table in the MVP. Add it later only when display names, avatars, sharing, or user preferences require profile data.
 
 ### events
 
@@ -18,7 +22,6 @@ Owned by one user.
 - `event_date date not null`
 - `venue text`
 - `memo text`
-- `planned_budget integer`
 - timestamps
 
 ### circles
@@ -33,9 +36,9 @@ Owned by one user and belongs to one event.
 - `x_url text`
 - `web_url text`
 - `memo text`
-- `priority circle_priority not null`
+- `priority text not null`
 - `assignee text`
-- `visit_status visit_status not null`
+- `visit_status text not null`
 - timestamps
 
 ### items
@@ -52,23 +55,31 @@ Owned by one user and belongs to one circle.
 - `purchased boolean not null default false`
 - timestamps
 
-## Enum Strategy
+## Value Constraint Strategy
 
-PostgreSQL enums are acceptable for stable values:
+Use `text + check constraint` for MVP values:
 
-- `circle_priority`: `must_go`, `want_to_go`, `if_time`
-- `visit_status`: `not_visited`, `purchased`, `sold_out`, `skipped`
+- `priority`: `must`, `want`, `if_time`
+- `visit_status`: `unvisited`, `purchased`, `sold_out`, `skipped`
 
-If product copy changes, keep DB enum keys stable and translate at the UI boundary.
+This keeps the initial schema easy to evolve while still rejecting invalid states. UI labels can change independently from stored values.
 
 ## Indexes
 
 - `events (user_id, event_date desc)`
+- `events (user_id)`
+- `circles (user_id)`
+- `circles (event_id)`
 - `circles (event_id, priority, visit_status)`
 - `circles (event_id, space_number)`
 - `circles (user_id, assignee)` where assignee is not null
 - `items (circle_id)`
+- `items (user_id)`
 - `items (user_id, purchased)`
+
+## Deferred Columns
+
+`planned_budget` is deferred until Phase 5 Budget. The first budget UI can be added with a focused migration when the budget workflow starts.
 
 ## Future Tables
 

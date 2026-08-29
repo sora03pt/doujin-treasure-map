@@ -6,9 +6,9 @@
 
 ## Current Status
 
-Initial setup branch: `codex/initial-setup`
+Phase 1 branch: `codex/phase-1-auth-db`
 
-This repository currently contains the Next.js scaffold, product documentation, feature-based directory skeleton, Supabase schema draft, and repository-specific AI development instructions. The full application UI and Supabase integration will start in Phase 1.
+This repository currently contains the Next.js scaffold, product documentation, feature-based directory skeleton, Supabase Auth wiring, the initial database schema, and repository-specific AI development instructions.
 
 ## Tech Stack
 
@@ -21,7 +21,7 @@ This repository currently contains the Next.js scaffold, product documentation, 
 - Supabase Auth
 - Vercel
 
-Supabase client libraries are intentionally not installed yet. Add them in Phase 1 after the Supabase project and environment variables are ready.
+Supabase uses cookie-based SSR helpers and the browser-safe anon key. Do not put a Service Role Key in this repository or in browser code.
 
 ## Product Principles
 
@@ -40,7 +40,7 @@ Supabase client libraries are intentionally not installed yet. Add them in Phase
 - Event date
 - Venue
 - Memo
-- Planned budget
+- Planned budget is deferred to Phase 5 database work
 
 ### Circle
 
@@ -89,7 +89,7 @@ features/
   map/                     Future map asset and pin domain
 lib/                       Cross-feature utilities
 supabase/
-  migrations/              Supabase schema drafts and migrations
+  migrations/              Supabase schema and migrations
 .codex/skills/             Repository-specific Codex skill
 ```
 
@@ -110,6 +110,30 @@ npm install
 npm run dev
 ```
 
+Open `http://localhost:3000`.
+
+## Supabase Setup
+
+Create a Supabase project, then copy `.env.example` to `.env.local` and fill in:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+```
+
+Apply the initial schema from:
+
+```text
+supabase/migrations/20260825000000_initial_schema.sql
+```
+
+In Supabase Auth, enable Email/Password sign-in. Add these local redirect URLs:
+
+```text
+http://localhost:3000/auth/confirm
+http://localhost:3000/**
+```
+
 Validation commands:
 
 ```bash
@@ -118,14 +142,13 @@ npm run typecheck
 npm run build
 ```
 
-## Supabase Setup Needed In Phase 1
+## Auth Check
 
-Create a Supabase project manually if the CLI or account authentication is not available to Codex. Then provide or configure:
+Expected MVP auth flow:
 
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- Supabase Auth settings
-- Redirect URL for local development
-- Reviewed database migration from `supabase/migrations/00000000000000_initial_schema_draft.sql`
+- Unauthenticated users visiting `/` or `/events/**` are redirected to `/login`.
+- `/login` supports sign up and login with email/password.
+- Logged-in users visiting `/login` are redirected to the event list.
+- Event list shows an empty state when the user owns no events.
 
 Do not expose the Service Role Key to the browser.

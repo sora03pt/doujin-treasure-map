@@ -6,11 +6,11 @@ Every user-created row must be readable and mutable only by its owner. Child rec
 
 ## Event Policies
 
-Events can be selected, inserted, updated, and deleted only when `auth.uid() = user_id`.
+Events have explicit policies for select, insert, update, and delete. Each policy allows access only when `auth.uid() = user_id`.
 
 ## Circle Policies
 
-Circles can be selected, inserted, updated, and deleted only when:
+Circles have explicit policies for select, insert, update, and delete. Each policy allows access only when:
 
 - `auth.uid() = user_id`
 - the parent event exists
@@ -18,7 +18,7 @@ Circles can be selected, inserted, updated, and deleted only when:
 
 ## Item Policies
 
-Items can be selected, inserted, updated, and deleted only when:
+Items have explicit policies for select, insert, update, and delete. Each policy allows access only when:
 
 - `auth.uid() = user_id`
 - the parent circle exists

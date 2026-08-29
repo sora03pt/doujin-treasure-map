@@ -7,7 +7,6 @@ export type Event = {
   eventDate: string;
   venue: string | null;
   memo: string | null;
-  plannedBudget: number | null;
   createdAt: string;
   updatedAt: string;
 };
