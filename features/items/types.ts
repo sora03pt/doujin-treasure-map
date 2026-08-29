@@ -7,10 +7,38 @@ export type Item = {
   circleId: CircleId;
   userId: string;
   name: string;
-  price: number;
+  price: number | null;
   quantity: number;
   memo: string | null;
   purchased: boolean;
   createdAt: string;
   updatedAt: string;
+};
+
+export type ItemFormValues = {
+  name: string;
+  price: string;
+  quantity: string;
+  memo: string;
+};
+
+export type ItemFieldErrors = Partial<Record<keyof ItemFormValues, string>>;
+
+export type ItemFormState = {
+  status: "idle" | "error";
+  message: string;
+  fieldErrors: ItemFieldErrors;
+  values: ItemFormValues;
+};
+
+export type DeleteItemState = {
+  status: "idle" | "error";
+  message: string;
+};
+
+export type ValidatedItemInput = {
+  name: string;
+  price: number | null;
+  quantity: number;
+  memo: string | null;
 };

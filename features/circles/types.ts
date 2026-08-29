@@ -11,7 +11,7 @@ export type Circle = {
   eventId: EventId;
   userId: string;
   name: string;
-  spaceNumber: string;
+  spaceNumber: string | null;
   xUrl: string | null;
   webUrl: string | null;
   memo: string | null;
@@ -20,4 +20,38 @@ export type Circle = {
   visitStatus: VisitStatus;
   createdAt: string;
   updatedAt: string;
+};
+
+export type CircleFormValues = {
+  name: string;
+  spaceNumber: string;
+  priority: CirclePriority;
+  visitStatus: VisitStatus;
+  memo: string;
+  assignee: string;
+};
+
+export type CircleFieldErrors = Partial<
+  Record<keyof CircleFormValues, string>
+>;
+
+export type CircleFormState = {
+  status: "idle" | "error";
+  message: string;
+  fieldErrors: CircleFieldErrors;
+  values: CircleFormValues;
+};
+
+export type DeleteCircleState = {
+  status: "idle" | "error";
+  message: string;
+};
+
+export type ValidatedCircleInput = {
+  name: string;
+  spaceNumber: string | null;
+  priority: CirclePriority;
+  visitStatus: VisitStatus;
+  memo: string | null;
+  assignee: string | null;
 };

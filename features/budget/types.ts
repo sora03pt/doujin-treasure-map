@@ -12,7 +12,7 @@ export function summarizeBudget(
 ): BudgetSummary {
   const purchasedAmount = items
     .filter((item) => item.purchased)
-    .reduce((total, item) => total + item.price * item.quantity, 0);
+    .reduce((total, item) => total + (item.price ?? 0) * item.quantity, 0);
 
   return {
     plannedAmount,

@@ -67,14 +67,20 @@ export async function updateSession(request: NextRequest) {
   const isAuthenticated = Boolean(data?.claims && !error);
 
   if (pathname === "/login" && isAuthenticated) {
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/";
-    redirectUrl.search = "";
-    return withPendingAuthCookies(
-      NextResponse.redirect(redirectUrl),
-      pendingCookies,
-      pendingHeaders,
-    );
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = "/";
+      redirectUrl.search = "";
+      return withPendingAuthCookies(
+        NextResponse.redirect(redirectUrl),
+        pendingCookies,
+        pendingHeaders,
+      );
+    }
   }
 
   if (!isPublicPath(pathname) && !isAuthenticated) {
