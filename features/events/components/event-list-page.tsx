@@ -1,19 +1,24 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { LogoutButton } from "@/features/auth/components/logout-button";
-import { createClient } from "@/lib/supabase/server";
+import { listEventsForCurrentUser } from "@/features/events/data";
 
-type EventRow = {
-  id: string;
-  name: string;
-  event_date: string;
-  venue: string | null;
+const notices = {
+  created: "イベントを作成しました。",
+  updated: "イベントを更新しました。",
+  deleted: "イベントを削除しました。",
+} as const;
+
+type EventListPageProps = {
+  notice?: keyof typeof notices;
 };
 
 function formatEventDate(value: string) {
   return new Intl.DateTimeFormat("ja-JP", {
     dateStyle: "medium",
-  }).format(new Date(`${value}T00:00:00+09:00`));
+    timeZone: "UTC",
+  }).format(new Date(`${value}T00:00:00Z`));
 }
 
 function EmptyState() {
@@ -26,7 +31,7 @@ function EmptyState() {
         まだイベントがありません
       </h2>
       <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-600 dark:text-slate-300">
-        Phase 2でイベント作成を実装します。まずはログインとDB/RLSの土台を確認できる状態です。
+        参加予定のイベントを登録して、当日の宝の地図を作り始めましょう。
       </p>
       <Link
         className="mt-6 inline-flex min-h-12 items-center justify-center rounded-lg bg-slate-950 px-5 text-base font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-950"
@@ -38,16 +43,14 @@ function EmptyState() {
   );
 }
 
-export async function EventListPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const { data: events, error } = await supabase
-    .from("events")
-    .select("id,name,event_date,venue")
-    .order("event_date", { ascending: true })
-    .returns<EventRow[]>();
+export async function EventListPage({ notice }: EventListPageProps = {}) {
+  const result = await listEventsForCurrentUser();
+
+  if (result.status === "unauthenticated") {
+    redirect("/login");
+  }
+
+  const events = result.events;
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-5 text-slate-950 sm:px-6 lg:px-8 dark:bg-slate-950 dark:text-slate-50">
@@ -61,22 +64,31 @@ export async function EventListPage() {
               イベント一覧
             </h1>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-              {user?.email ?? "ログイン中"} の宝の地図
+              参加予定を開催日が新しい順に表示しています。
             </p>
           </div>
           <LogoutButton />
         </header>
 
-        {error ? (
+        {notice ? (
+          <p
+            className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-900"
+            role="status"
+          >
+            {notices[notice]}
+          </p>
+        ) : null}
+
+        {result.status === "error" ? (
           <p
             className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-900"
             role="alert"
           >
-            イベント一覧を読み込めませんでした: {error.message}
+            イベント一覧を読み込めませんでした。時間をおいて再度お試しください。
           </p>
         ) : null}
 
-        {!error && events?.length ? (
+        {result.status === "success" && events.length > 0 ? (
           <section aria-labelledby="events-title" className="space-y-3">
             <div className="flex items-center justify-between gap-3">
               <h2 id="events-title" className="text-xl font-semibold">
@@ -100,8 +112,15 @@ export async function EventListPage() {
                       {event.name}
                     </span>
                     <span className="mt-1 block text-sm text-slate-600 dark:text-slate-300">
-                      {formatEventDate(event.event_date)}
-                      {event.venue ? ` / ${event.venue}` : ""}
+                      <time dateTime={event.eventDate}>
+                        {formatEventDate(event.eventDate)}
+                      </time>
+                    </span>
+                    <span className="mt-1 block text-sm text-slate-600 dark:text-slate-300">
+                      {event.venue || "会場未登録"}
+                    </span>
+                    <span className="mt-3 block text-sm font-semibold text-blue-700 dark:text-blue-300">
+                      詳細・編集へ
                     </span>
                   </Link>
                 </li>
@@ -110,7 +129,9 @@ export async function EventListPage() {
           </section>
         ) : null}
 
-        {!error && events?.length === 0 ? <EmptyState /> : null}
+        {result.status === "success" && events.length === 0 ? (
+          <EmptyState />
+        ) : null}
       </div>
     </main>
   );
