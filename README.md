@@ -21,7 +21,7 @@ This repository currently contains the Next.js scaffold, product documentation, 
 - Supabase Auth
 - Vercel
 
-Supabase uses cookie-based SSR helpers and the browser-safe anon key. Do not put a Service Role Key in this repository or in browser code.
+Supabase uses cookie-based SSR helpers and the browser-safe publishable key. Do not put a Service Role Key or secret key in this repository or in browser code.
 
 ## Product Principles
 
@@ -118,7 +118,7 @@ Create a Supabase project, then copy `.env.example` to `.env.local` and fill in:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=...
-NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=...
 ```
 
 Apply the initial schema from:

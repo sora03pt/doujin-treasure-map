@@ -42,13 +42,13 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  const { url, anonKey } = getSupabaseConfig();
+  const { url, publishableKey } = getSupabaseConfig();
   const pendingCookies: Parameters<
     NonNullable<CookieMethodsServer["setAll"]>
   >[0] = [];
   const pendingHeaders: Record<string, string> = {};
 
-  const supabase = createServerClient<Database>(url, anonKey, {
+  const supabase = createServerClient<Database>(url, publishableKey, {
     cookies: {
       getAll() {
         return request.cookies.getAll();

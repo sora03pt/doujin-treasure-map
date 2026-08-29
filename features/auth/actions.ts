@@ -59,7 +59,7 @@ export async function authenticate(
     return {
       status: "error",
       message:
-        "Supabase環境変数が未設定です。.env.localを設定してから再実行してください。",
+        "Supabase環境変数が未設定です。NEXT_PUBLIC_SUPABASE_URLとNEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEYを.env.localへ設定してください。",
     };
   }
 
