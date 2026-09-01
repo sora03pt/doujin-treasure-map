@@ -44,7 +44,7 @@ function isPriority(value: string): value is CirclePriority {
   return PRIORITIES.includes(value as CirclePriority);
 }
 
-function isVisitStatus(value: string): value is VisitStatus {
+export function isVisitStatus(value: string): value is VisitStatus {
   return VISIT_STATUSES.includes(value as VisitStatus);
 }
 

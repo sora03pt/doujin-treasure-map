@@ -47,6 +47,12 @@ export type DeleteCircleState = {
   message: string;
 };
 
+export type QuickVisitStatusState = {
+  status: "idle" | "success" | "error";
+  message: string;
+  visitStatus: VisitStatus;
+};
+
 export type ValidatedCircleInput = {
   name: string;
   spaceNumber: string | null;

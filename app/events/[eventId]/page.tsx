@@ -2,7 +2,9 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { CircleList } from "@/features/circles/components/circle-list";
+import { EventDaySummary } from "@/features/circles/components/event-day-summary";
 import { listCirclesForCurrentUser } from "@/features/circles/data";
+import { parseEventDayFilters } from "@/features/circles/event-day";
 import { updateEvent } from "@/features/events/actions";
 import { DeleteEventDialog } from "@/features/events/components/delete-event-dialog";
 import { EventForm } from "@/features/events/components/event-form";
@@ -12,7 +14,11 @@ import { listItemsForCurrentUser } from "@/features/items/data";
 
 type EventDetailPageProps = {
   params: Promise<{ eventId: string }>;
-  searchParams: Promise<{ notice?: string }>;
+  searchParams: Promise<{
+    notice?: string;
+    status?: string | string[];
+    priority?: string | string[];
+  }>;
 };
 
 const noticeMessages: Record<string, string> = {
@@ -37,7 +43,7 @@ export default async function EventDetailPage({
   params,
   searchParams,
 }: EventDetailPageProps) {
-  const [{ eventId }, { notice }] = await Promise.all([params, searchParams]);
+  const [{ eventId }, query] = await Promise.all([params, searchParams]);
 
   if (!isEventId(eventId)) {
     notFound();
@@ -85,7 +91,8 @@ export default async function EventDetailPage({
 
   const event = result.event;
   const updateEventWithId = updateEvent.bind(null, event.id);
-  const noticeMessage = notice ? noticeMessages[notice] : undefined;
+  const noticeMessage = query.notice ? noticeMessages[query.notice] : undefined;
+  const filters = parseEventDayFilters(query);
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-5 text-slate-950 sm:px-6 lg:px-8 dark:bg-slate-950 dark:text-slate-50">
@@ -154,10 +161,13 @@ export default async function EventDetailPage({
           </details>
         </section>
 
+        <EventDaySummary circles={circlesResult.circles} />
+
         <div className="mt-6">
           <CircleList
             circles={circlesResult.circles}
             eventId={event.id}
+            filters={filters}
             items={itemsResult.items}
           />
         </div>
