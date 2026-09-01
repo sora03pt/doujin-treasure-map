@@ -48,7 +48,7 @@ export type Database = {
           event_id: string;
           user_id: string;
           name: string;
-          space_number: string;
+          space_number: string | null;
           x_url: string | null;
           web_url: string | null;
           memo: string | null;
@@ -63,7 +63,7 @@ export type Database = {
           event_id: string;
           user_id: string;
           name: string;
-          space_number: string;
+          space_number?: string | null;
           x_url?: string | null;
           web_url?: string | null;
           memo?: string | null;
@@ -78,7 +78,7 @@ export type Database = {
           event_id?: string;
           user_id?: string;
           name?: string;
-          space_number?: string;
+          space_number?: string | null;
           x_url?: string | null;
           web_url?: string | null;
           memo?: string | null;
@@ -104,7 +104,7 @@ export type Database = {
           circle_id: string;
           user_id: string;
           name: string;
-          price: number;
+          price: number | null;
           quantity: number;
           memo: string | null;
           purchased: boolean;
@@ -116,7 +116,7 @@ export type Database = {
           circle_id: string;
           user_id: string;
           name: string;
-          price?: number;
+          price?: number | null;
           quantity?: number;
           memo?: string | null;
           purchased?: boolean;
@@ -128,7 +128,7 @@ export type Database = {
           circle_id?: string;
           user_id?: string;
           name?: string;
-          price?: number;
+          price?: number | null;
           quantity?: number;
           memo?: string | null;
           purchased?: boolean;
