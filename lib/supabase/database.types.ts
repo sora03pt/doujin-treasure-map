@@ -15,6 +15,7 @@ export type Database = {
           user_id: string;
           name: string;
           event_date: string;
+          planned_budget: number | null;
           venue: string | null;
           memo: string | null;
           created_at: string;
@@ -25,6 +26,7 @@ export type Database = {
           user_id: string;
           name: string;
           event_date: string;
+          planned_budget?: number | null;
           venue?: string | null;
           memo?: string | null;
           created_at?: string;
@@ -35,6 +37,7 @@ export type Database = {
           user_id?: string;
           name?: string;
           event_date?: string;
+          planned_budget?: number | null;
           venue?: string | null;
           memo?: string | null;
           created_at?: string;

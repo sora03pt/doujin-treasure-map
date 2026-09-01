@@ -10,6 +10,7 @@ const EVENT_ID_PATTERN =
 const NAME_MAX_LENGTH = 120;
 const VENUE_MAX_LENGTH = 200;
 const MEMO_MAX_LENGTH = 2000;
+const POSTGRES_INTEGER_MAX = 2_147_483_647;
 
 type EventValidationResult =
   | {
@@ -27,6 +28,15 @@ function readText(formData: FormData, name: string) {
   const value = formData.get(name);
 
   return typeof value === "string" ? value.trim() : "";
+}
+
+function parseInteger(value: string) {
+  if (!/^\d+$/.test(value)) {
+    return null;
+  }
+
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) ? parsed : null;
 }
 
 function isValidDate(value: string) {
@@ -56,10 +66,14 @@ export function validateEventForm(formData: FormData): EventValidationResult {
   const values: EventFormValues = {
     name: readText(formData, "name"),
     eventDate: readText(formData, "event_date"),
+    plannedBudget: readText(formData, "planned_budget"),
     venue: readText(formData, "venue"),
     memo: readText(formData, "memo"),
   };
   const fieldErrors: EventFieldErrors = {};
+  const plannedBudget = values.plannedBudget
+    ? parseInteger(values.plannedBudget)
+    : null;
 
   if (!values.name) {
     fieldErrors.name = "イベント名を入力してください。";
@@ -71,6 +85,15 @@ export function validateEventForm(formData: FormData): EventValidationResult {
     fieldErrors.eventDate = "開催日を入力してください。";
   } else if (!isValidDate(values.eventDate)) {
     fieldErrors.eventDate = "開催日を正しい日付で入力してください。";
+  }
+
+  if (
+    values.plannedBudget &&
+    (plannedBudget === null ||
+      plannedBudget < 0 ||
+      plannedBudget > POSTGRES_INTEGER_MAX)
+  ) {
+    fieldErrors.plannedBudget = "予定予算は0以上の整数で入力してください。";
   }
 
   if (values.venue.length > VENUE_MAX_LENGTH) {
@@ -90,6 +113,7 @@ export function validateEventForm(formData: FormData): EventValidationResult {
     input: {
       name: values.name,
       eventDate: values.eventDate,
+      plannedBudget,
       venue: values.venue || null,
       memo: values.memo || null,
     },

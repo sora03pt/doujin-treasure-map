@@ -40,6 +40,7 @@ function toEvent(row: {
   user_id: string;
   name: string;
   event_date: string;
+  planned_budget: number | null;
   venue: string | null;
   memo: string | null;
   created_at: string;
@@ -50,6 +51,7 @@ function toEvent(row: {
     userId: row.user_id,
     name: row.name,
     eventDate: row.event_date,
+    plannedBudget: row.planned_budget,
     venue: row.venue,
     memo: row.memo,
     createdAt: row.created_at,
@@ -61,6 +63,7 @@ function toDatabaseInput(input: ValidatedEventInput) {
   return {
     name: input.name,
     event_date: input.eventDate,
+    planned_budget: input.plannedBudget,
     venue: input.venue,
     memo: input.memo,
   };
@@ -101,7 +104,7 @@ export async function getEventForCurrentUser(eventId: string) {
   const { data, error } = await context.supabase
     .from("events")
     .select(
-      "id,user_id,name,event_date,venue,memo,created_at,updated_at",
+      "id,user_id,name,event_date,planned_budget,venue,memo,created_at,updated_at",
     )
     .eq("id", eventId)
     .eq("user_id", context.userId)
