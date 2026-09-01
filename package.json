@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:event-day": "node --test --experimental-strip-types features/circles/event-day.test.mjs",
     "typecheck": "tsc --noEmit --incremental false"
   },
   "dependencies": {

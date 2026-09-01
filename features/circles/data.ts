@@ -214,6 +214,44 @@ export async function updateCircleForCurrentUser(
     : { status: "not_found" as const };
 }
 
+export async function updateCircleVisitStatusForCurrentUser(
+  eventId: string,
+  circleId: string,
+  visitStatus: Circle["visitStatus"],
+) {
+  const context = await getAuthenticatedContext();
+
+  if (!context) {
+    return { status: "unauthenticated" as const };
+  }
+
+  const ownership = await findOwnedCircle(context, eventId, circleId);
+
+  if (ownership.status !== "owned") {
+    return ownership;
+  }
+
+  const { data, error } = await context.supabase
+    .from("circles")
+    .update({ visit_status: visitStatus })
+    .eq("id", circleId)
+    .eq("event_id", eventId)
+    .eq("user_id", context.userId)
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    console.error("Failed to update circle visit status", {
+      code: error.code,
+    });
+    return { status: "error" as const };
+  }
+
+  return data
+    ? { status: "success" as const }
+    : { status: "not_found" as const };
+}
+
 export async function deleteCircleForCurrentUser(
   eventId: string,
   circleId: string,

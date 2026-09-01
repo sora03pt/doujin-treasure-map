@@ -7,13 +7,16 @@ import {
   createCircleForCurrentUser,
   deleteCircleForCurrentUser,
   updateCircleForCurrentUser,
+  updateCircleVisitStatusForCurrentUser,
 } from "@/features/circles/data";
 import type {
   CircleFormState,
   DeleteCircleState,
+  QuickVisitStatusState,
 } from "@/features/circles/types";
 import {
   isCircleId,
+  isVisitStatus,
   validateCircleForm,
 } from "@/features/circles/validation";
 import { isEventId } from "@/features/events/validation";
@@ -154,4 +157,60 @@ export async function deleteCircle(
 
   revalidatePath(`/events/${eventId}`);
   redirect(`/events/${eventId}?notice=circle-deleted#circles`);
+}
+
+export async function quickUpdateCircleVisitStatus(
+  eventId: string,
+  circleId: string,
+  previousState: QuickVisitStatusState,
+  formData: FormData,
+): Promise<QuickVisitStatusState> {
+  const visitStatus = formData.get("visit_status");
+
+  if (
+    !isEventId(eventId) ||
+    !isCircleId(circleId) ||
+    typeof visitStatus !== "string" ||
+    !isVisitStatus(visitStatus)
+  ) {
+    return {
+      status: "error",
+      message: "訪問状態を変更できませんでした。入力内容を確認してください。",
+      visitStatus: previousState.visitStatus,
+    };
+  }
+
+  const result = await updateCircleVisitStatusForCurrentUser(
+    eventId,
+    circleId,
+    visitStatus,
+  );
+
+  if (result.status === "unauthenticated") {
+    redirect("/login");
+  }
+
+  if (result.status === "not_found") {
+    return {
+      status: "error",
+      message: "サークルが見つからないか、変更権限がありません。",
+      visitStatus: previousState.visitStatus,
+    };
+  }
+
+  if (result.status === "error") {
+    return {
+      status: "error",
+      message: "訪問状態を変更できませんでした。時間をおいて再度お試しください。",
+      visitStatus: previousState.visitStatus,
+    };
+  }
+
+  revalidatePath(`/events/${eventId}`);
+
+  return {
+    status: "success",
+    message: "訪問状態を更新しました。",
+    visitStatus,
+  };
 }
