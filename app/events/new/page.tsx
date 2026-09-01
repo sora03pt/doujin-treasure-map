@@ -27,7 +27,13 @@ export default function NewEventPage() {
         <div className="mt-6">
           <EventForm
             action={createEvent}
-            initialValues={{ name: "", eventDate: "", venue: "", memo: "" }}
+            initialValues={{
+              name: "",
+              eventDate: "",
+              plannedBudget: "",
+              venue: "",
+              memo: "",
+            }}
             submitLabel="イベントを作成"
           />
         </div>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { BudgetSummary } from "@/features/budget/components/budget-summary";
 import { CircleList } from "@/features/circles/components/circle-list";
 import { EventDaySummary } from "@/features/circles/components/event-day-summary";
 import { listCirclesForCurrentUser } from "@/features/circles/data";
@@ -152,6 +153,7 @@ export default async function EventDetailPage({
                 initialValues={{
                   name: event.name,
                   eventDate: event.eventDate,
+                  plannedBudget: event.plannedBudget?.toString() ?? "",
                   venue: event.venue ?? "",
                   memo: event.memo ?? "",
                 }}
@@ -160,6 +162,12 @@ export default async function EventDetailPage({
             </div>
           </details>
         </section>
+
+        <BudgetSummary
+          circles={circlesResult.circles}
+          items={itemsResult.items}
+          plannedBudget={event.plannedBudget}
+        />
 
         <EventDaySummary circles={circlesResult.circles} />
 

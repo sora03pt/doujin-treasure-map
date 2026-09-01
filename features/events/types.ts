@@ -5,6 +5,7 @@ export type Event = {
   userId: string;
   name: string;
   eventDate: string;
+  plannedBudget: number | null;
   venue: string | null;
   memo: string | null;
   createdAt: string;
@@ -19,6 +20,7 @@ export type EventSummary = Pick<
 export type EventFormValues = {
   name: string;
   eventDate: string;
+  plannedBudget: string;
   venue: string;
   memo: string;
 };
@@ -42,6 +44,7 @@ export type DeleteEventState = {
 export type ValidatedEventInput = {
   name: string;
   eventDate: string;
+  plannedBudget: number | null;
   venue: string | null;
   memo: string | null;
 };

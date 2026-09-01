@@ -1,22 +1,6 @@
-import type { Item } from "@/features/items/types";
-
 export type BudgetSummary = {
-  plannedAmount: number;
-  purchasedAmount: number;
-  remainingAmount: number;
+  plannedBudget: number | null;
+  registeredTotal: number;
+  purchasedTotal: number;
+  remainingBudget: number | null;
 };
-
-export function summarizeBudget(
-  plannedAmount: number,
-  items: Item[],
-): BudgetSummary {
-  const purchasedAmount = items
-    .filter((item) => item.purchased)
-    .reduce((total, item) => total + (item.price ?? 0) * item.quantity, 0);
-
-  return {
-    plannedAmount,
-    purchasedAmount,
-    remainingAmount: plannedAmount - purchasedAmount,
-  };
-}

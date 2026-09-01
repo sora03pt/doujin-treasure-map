@@ -126,6 +126,46 @@ export function EventForm({
       <div className="space-y-2">
         <label
           className="block text-sm font-semibold"
+          htmlFor={fieldId("planned-budget")}
+        >
+          予定予算 <span className="font-normal text-slate-500">（任意）</span>
+        </label>
+        <div className="relative">
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500"
+          >
+            ¥
+          </span>
+          <input
+            aria-describedby={
+              state.fieldErrors.plannedBudget
+                ? errorId("planned-budget")
+                : undefined
+            }
+            aria-invalid={Boolean(state.fieldErrors.plannedBudget)}
+            className={`${inputClassName} pl-8`}
+            defaultValue={state.values.plannedBudget}
+            disabled={isPending}
+            id={fieldId("planned-budget")}
+            inputMode="numeric"
+            max={2147483647}
+            min={0}
+            name="planned_budget"
+            step={1}
+            type="number"
+          />
+        </div>
+        {state.fieldErrors.plannedBudget ? (
+          <p className="text-sm text-red-700" id={errorId("planned-budget")}>
+            {state.fieldErrors.plannedBudget}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="space-y-2">
+        <label
+          className="block text-sm font-semibold"
           htmlFor={fieldId("venue")}
         >
           会場 <span className="font-normal text-slate-500">（任意）</span>
