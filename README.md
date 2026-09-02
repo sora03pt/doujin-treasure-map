@@ -90,7 +90,6 @@ features/
 lib/                       Cross-feature utilities
 supabase/
   migrations/              Supabase schema and migrations
-.codex/skills/             Repository-specific Codex skill
 ```
 
 ## Documentation
@@ -101,7 +100,6 @@ supabase/
 - [RLS policy](docs/rls.md)
 - [Phase plan](docs/phases.md)
 - [Repository decisions](docs/repository-decisions.md)
-- [Codex skill](.codex/skills/doujin-treasure-map/SKILL.md)
 
 ## Development
 
