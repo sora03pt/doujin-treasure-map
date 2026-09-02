@@ -121,10 +121,10 @@ NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=...
 ```
 
-Apply the initial schema from:
+Apply all migrations to the linked project:
 
-```text
-supabase/migrations/20260825000000_initial_schema.sql
+```bash
+npx supabase db push
 ```
 
 In Supabase Auth, enable Email/Password sign-in. Add these local redirect URLs:
@@ -139,8 +139,40 @@ Validation commands:
 ```bash
 npm run lint
 npm run typecheck
+npm run test:unit
 npm run build
 ```
+
+## E2E / Accessibility
+
+Playwright E2E must use a dedicated test Supabase project and a normal Auth
+user. Never configure these values with a production project or a service role
+key.
+
+```bash
+E2E_SUPABASE_URL=...
+E2E_SUPABASE_PUBLISHABLE_KEY=...
+E2E_USER_EMAIL=...
+E2E_USER_PASSWORD=...
+E2E_ALLOW_REMOTE_TESTS=true
+npm run test:e2e
+```
+
+Local runs may use `TEST_USER_A_EMAIL` and `TEST_USER_A_PASSWORD` as credential
+fallbacks. Test events use a unique `E2E-*` prefix and are deleted through RLS
+as the same normal user after each test.
+
+GitHub Actions requires these repository secrets:
+
+- `E2E_SUPABASE_URL`
+- `E2E_SUPABASE_PUBLISHABLE_KEY`
+- `E2E_USER_EMAIL`
+- `E2E_USER_PASSWORD`
+
+The Quality Gate runs lint, typecheck, unit tests, build, Chromium E2E, mobile
+E2E, and axe checks. Failed CI runs retain reports and screenshots for seven
+days. CI traces are disabled because authenticated traces can contain test
+credentials or session tokens; local traces stay under ignored test output.
 
 ## Auth Check
 
