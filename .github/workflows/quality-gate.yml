@@ -51,15 +51,19 @@ jobs:
       - run: npm ci
       - name: Validate E2E secrets
         run: |
-          test -n "$E2E_SUPABASE_URL"
-          test -n "$E2E_SUPABASE_PUBLISHABLE_KEY"
-          test -n "$E2E_USER_EMAIL"
-          test -n "$E2E_USER_PASSWORD"
+          missing=0
+          for name in E2E_SUPABASE_URL E2E_SUPABASE_PUBLISHABLE_KEY E2E_USER_EMAIL E2E_USER_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing required repository secret: $name"
+              missing=1
+            fi
+          done
+          exit "$missing"
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - name: Upload Playwright artifacts
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-artifacts
           path: |
