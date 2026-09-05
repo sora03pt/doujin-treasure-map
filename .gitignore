@@ -12,6 +12,9 @@
 
 # testing
 /coverage
+/playwright-report/
+/test-results/
+/blob-report/
 
 # next.js
 /.next/
@@ -36,6 +39,9 @@ yarn-error.log*
 
 # supabase local metadata
 supabase/.temp/
+
+# Codex local files
+.codex/
 
 # vercel
 .vercel
