@@ -12,6 +12,8 @@ import { EventForm } from "@/features/events/components/event-form";
 import { getEventForCurrentUser } from "@/features/events/data";
 import { isEventId } from "@/features/events/validation";
 import { listItemsForCurrentUser } from "@/features/items/data";
+import { EventDaySnapshotManager } from "@/features/offline/components/event-day-snapshot-manager";
+import { createEventDaySnapshot } from "@/features/offline/snapshot";
 
 type EventDetailPageProps = {
   params: Promise<{ eventId: string }>;
@@ -94,6 +96,12 @@ export default async function EventDetailPage({
   const updateEventWithId = updateEvent.bind(null, event.id);
   const noticeMessage = query.notice ? noticeMessages[query.notice] : undefined;
   const filters = parseEventDayFilters(query);
+  const offlineSnapshot = createEventDaySnapshot(
+    event.userId,
+    event,
+    circlesResult.circles,
+    itemsResult.items,
+  );
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-5 text-slate-950 sm:px-6 lg:px-8 dark:bg-slate-950 dark:text-slate-50">
@@ -142,6 +150,8 @@ export default async function EventDetailPage({
               {event.memo}
             </p>
           ) : null}
+
+          <EventDaySnapshotManager snapshot={offlineSnapshot} />
 
           <details className="group mt-4">
             <summary className="flex min-h-11 cursor-pointer list-none items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 [&::-webkit-details-marker]:hidden">

@@ -44,8 +44,10 @@
 ## Phase 7: PWA / Offline
 
 - PWA manifest
-- Offline-friendly caching strategy
-- Local pending updates design
+- Static app shell and offline fallback through Serwist
+- User-scoped, read-only Event-day snapshots in IndexedDB
+- Offline mutation prevention and logout cleanup
+- Offline mutation queues remain out of scope
 
 ## Phase 8: Map UI
 

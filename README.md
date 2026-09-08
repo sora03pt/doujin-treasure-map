@@ -6,9 +6,10 @@
 
 ## Current Status
 
-Phase 1 branch: `codex/phase-1-auth-db`
+Phase 7 branch: `codex/phase-7-pwa-offline`
 
-This repository currently contains the Next.js scaffold, product documentation, feature-based directory skeleton, Supabase Auth wiring, the initial database schema, and repository-specific AI development instructions.
+The MVP currently includes Auth, Event/Circle/Item CRUD, the event-day view,
+budget summaries, automated quality gates, and read-only offline snapshots.
 
 ## Tech Stack
 
@@ -19,6 +20,8 @@ This repository currently contains the Next.js scaffold, product documentation, 
 - Supabase
 - PostgreSQL
 - Supabase Auth
+- Serwist PWA
+- IndexedDB offline snapshots
 - Vercel
 
 Supabase uses cookie-based SSR helpers and the browser-safe publishable key. Do not put a Service Role Key or secret key in this repository or in browser code.
@@ -30,7 +33,7 @@ Supabase uses cookie-based SSR helpers and the browser-safe publishable key. Do 
 - Do not scrape event catalog services unless an official API and permission are confirmed.
 - Do not commit official event logos, trademarks, paid catalog data, or map images without rights.
 - Event-day mobile operation matters more than decorative UI.
-- Offline/PWA, map pins, sharing, OCR, and monetization are future phases, not MVP setup work.
+- Map pins, sharing, OCR, and monetization remain future phases.
 
 ## MVP Summary
 
@@ -40,7 +43,7 @@ Supabase uses cookie-based SSR helpers and the browser-safe publishable key. Do 
 - Event date
 - Venue
 - Memo
-- Planned budget is deferred to Phase 5 database work
+- Planned budget
 
 ### Circle
 
@@ -87,6 +90,7 @@ features/
   events/                  Event domain
   items/                   Item domain
   map/                     Future map asset and pin domain
+  offline/                 Connectivity and offline Event-day snapshots
 lib/                       Cross-feature utilities
 supabase/
   migrations/              Supabase schema and migrations
@@ -109,6 +113,10 @@ npm run dev
 ```
 
 Open `http://localhost:3000`.
+
+The service worker is disabled in development so that stale caches do not
+interfere with debugging. Use `npm run build` followed by `npm run start` to
+verify production PWA behavior.
 
 ## Supabase Setup
 
@@ -141,6 +149,33 @@ npm run test:unit
 npm run build
 ```
 
+## PWA / Offline
+
+The production build runs Next.js and then Serwist Configurator mode to create
+`public/sw.js`. The generated file is ignored by Git and rebuilt in CI and on
+deployment.
+
+The service worker precaches the public offline fallback, manifest, icons, and
+build assets. Runtime caching is limited to `/_next/static/` and `/icons/`.
+Navigation, RSC, API, Supabase, user images, and authentication responses use
+the network and are not stored in runtime caches.
+
+Opening an Event online saves a minimal read-only Event-day snapshot to
+IndexedDB. Snapshots contain Event/Circle/Item display data and calculated
+budget/progress summaries, but no credentials, tokens, cookies, or Supabase
+responses. Storage is separated by `userId + eventId`, limited to five recent
+Events per user, and expires after 30 days. Logout clears all local snapshots
+before the server logout action runs. Offline mutation queues and background
+sync are intentionally not implemented; write controls are disabled when the
+connectivity probe fails.
+
+Production PWA verification uses a dedicated server and the same normal-user
+Supabase credentials as the other E2E tests:
+
+```bash
+E2E_ALLOW_REMOTE_TESTS=true npm run test:e2e:pwa
+```
+
 ## E2E / Accessibility
 
 Playwright E2E must use a dedicated test Supabase project and a normal Auth
@@ -167,10 +202,11 @@ GitHub Actions requires these repository secrets:
 - `E2E_USER_EMAIL`
 - `E2E_USER_PASSWORD`
 
-The Quality Gate runs lint, typecheck, unit tests, build, Chromium E2E, mobile
-E2E, and axe checks. Failed CI runs retain reports and screenshots for seven
-days. CI traces are disabled because authenticated traces can contain test
-credentials or session tokens; local traces stay under ignored test output.
+The Quality Gate runs lint, typecheck, unit tests, production build, Chromium
+E2E, mobile E2E, production PWA/offline E2E, and axe checks. Failed CI runs
+retain reports and screenshots for seven days. CI traces are disabled because
+authenticated traces can contain test credentials or session tokens; local
+traces stay under ignored test output.
 
 ## Auth Check
 

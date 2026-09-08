@@ -6,6 +6,7 @@ import type {
   CircleFormState,
   CircleFormValues,
 } from "@/features/circles/types";
+import { useConnectivity } from "@/features/offline/components/connectivity-provider";
 
 type CircleFormAction = (
   state: CircleFormState,
@@ -43,6 +44,8 @@ export function CircleForm({
     values: initialValues,
   });
   const errorSummaryRef = useRef<HTMLParagraphElement>(null);
+  const { isOnline } = useConnectivity();
+  const controlsDisabled = isPending || !isOnline;
 
   useEffect(() => {
     if (state.status !== "error") {
@@ -86,7 +89,7 @@ export function CircleForm({
           aria-invalid={Boolean(state.fieldErrors.name)}
           className={inputClassName}
           defaultValue={state.values.name}
-          disabled={isPending}
+          disabled={controlsDisabled}
           id={fieldId("name")}
           maxLength={120}
           name="name"
@@ -105,7 +108,7 @@ export function CircleForm({
           aria-invalid={Boolean(state.fieldErrors.spaceNumber)}
           className={inputClassName}
           defaultValue={state.values.spaceNumber}
-          disabled={isPending}
+          disabled={controlsDisabled}
           id={fieldId("space-number")}
           maxLength={50}
           name="space_number"
@@ -122,7 +125,7 @@ export function CircleForm({
             aria-invalid={Boolean(state.fieldErrors.priority)}
             className={inputClassName}
             defaultValue={state.values.priority}
-            disabled={isPending}
+            disabled={controlsDisabled}
             id={fieldId("priority")}
             name="priority"
           >
@@ -140,7 +143,7 @@ export function CircleForm({
             aria-invalid={Boolean(state.fieldErrors.visitStatus)}
             className={inputClassName}
             defaultValue={state.values.visitStatus}
-            disabled={isPending}
+            disabled={controlsDisabled}
             id={fieldId("visit-status")}
             name="visit_status"
           >
@@ -162,7 +165,7 @@ export function CircleForm({
           aria-invalid={Boolean(state.fieldErrors.assignee)}
           className={inputClassName}
           defaultValue={state.values.assignee}
-          disabled={isPending}
+          disabled={controlsDisabled}
           id={fieldId("assignee")}
           maxLength={100}
           name="assignee"
@@ -180,7 +183,7 @@ export function CircleForm({
           aria-invalid={Boolean(state.fieldErrors.memo)}
           className={`${inputClassName} min-h-28 py-3 leading-6`}
           defaultValue={state.values.memo}
-          disabled={isPending}
+          disabled={controlsDisabled}
           id={fieldId("memo")}
           maxLength={2000}
           name="memo"
@@ -192,10 +195,14 @@ export function CircleForm({
       <button
         aria-live="polite"
         className="min-h-12 w-full rounded-lg bg-slate-950 px-5 text-base font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-950"
-        disabled={isPending}
+        disabled={controlsDisabled}
         type="submit"
       >
-        {isPending ? "保存中..." : submitLabel}
+        {isPending
+          ? "保存中..."
+          : !isOnline
+            ? "オフライン中は保存できません"
+            : submitLabel}
       </button>
     </form>
   );

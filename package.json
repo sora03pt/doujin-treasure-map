@@ -2,15 +2,22 @@
   "name": "doujin-treasure-map",
   "version": "0.1.0",
   "private": true,
+  "overrides": {
+    "@serwist/next": {
+      "browserslist": "4.28.9"
+    }
+  },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack && serwist build serwist.config.mjs",
     "start": "next start",
     "lint": "eslint",
     "test:budget": "node --test --experimental-strip-types features/budget/calculation.test.mjs",
     "test:e2e": "playwright test",
+    "test:e2e:pwa": "npm run build && playwright test --config=playwright.pwa.config.ts",
     "test:event-day": "node --test --experimental-strip-types features/circles/event-day.test.mjs",
-    "test:unit": "npm run test:budget && npm run test:event-day",
+    "test:offline": "node --test --experimental-strip-types features/offline/snapshot.test.mjs features/offline/storage.test.mjs",
+    "test:unit": "npm run test:budget && npm run test:event-day && npm run test:offline",
     "typecheck": "tsc --noEmit --incremental false"
   },
   "dependencies": {
@@ -24,13 +31,18 @@
     "@axe-core/playwright": "^4.13.0",
     "@next/env": "^16.3.2",
     "@playwright/test": "^1.62.1",
+    "@serwist/cli": "^9.5.12",
+    "@serwist/next": "^9.5.12",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "esbuild": "^0.28.2",
     "eslint": "^9",
     "eslint-config-next": "16.3.2",
+    "fake-indexeddb": "^6.2.5",
     "picomatch": "4.0.7",
+    "serwist": "^9.5.12",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

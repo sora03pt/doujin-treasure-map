@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useId, useRef } from "react";
 
 import type { ItemFormState, ItemFormValues } from "@/features/items/types";
+import { useConnectivity } from "@/features/offline/components/connectivity-provider";
 
 type ItemFormAction = (
   state: ItemFormState,
@@ -34,6 +35,8 @@ export function ItemForm({ action, initialValues, submitLabel }: ItemFormProps) 
     values: initialValues,
   });
   const errorSummaryRef = useRef<HTMLParagraphElement>(null);
+  const { isOnline } = useConnectivity();
+  const controlsDisabled = isPending || !isOnline;
 
   useEffect(() => {
     if (state.status !== "error") {
@@ -77,7 +80,7 @@ export function ItemForm({ action, initialValues, submitLabel }: ItemFormProps) 
           aria-invalid={Boolean(state.fieldErrors.name)}
           className={inputClassName}
           defaultValue={state.values.name}
-          disabled={isPending}
+          disabled={controlsDisabled}
           id={fieldId("name")}
           maxLength={200}
           name="name"
@@ -97,7 +100,7 @@ export function ItemForm({ action, initialValues, submitLabel }: ItemFormProps) 
             aria-invalid={Boolean(state.fieldErrors.price)}
             className={inputClassName}
             defaultValue={state.values.price}
-            disabled={isPending}
+            disabled={controlsDisabled}
             id={fieldId("price")}
             inputMode="numeric"
             min={0}
@@ -117,7 +120,7 @@ export function ItemForm({ action, initialValues, submitLabel }: ItemFormProps) 
             aria-invalid={Boolean(state.fieldErrors.quantity)}
             className={inputClassName}
             defaultValue={state.values.quantity}
-            disabled={isPending}
+            disabled={controlsDisabled}
             id={fieldId("quantity")}
             inputMode="numeric"
             min={1}
@@ -139,7 +142,7 @@ export function ItemForm({ action, initialValues, submitLabel }: ItemFormProps) 
           aria-invalid={Boolean(state.fieldErrors.memo)}
           className={`${inputClassName} min-h-24 py-3 leading-6`}
           defaultValue={state.values.memo}
-          disabled={isPending}
+          disabled={controlsDisabled}
           id={fieldId("memo")}
           maxLength={2000}
           name="memo"
@@ -151,10 +154,14 @@ export function ItemForm({ action, initialValues, submitLabel }: ItemFormProps) 
       <button
         aria-live="polite"
         className="min-h-12 w-full rounded-lg bg-slate-950 px-5 text-base font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-950"
-        disabled={isPending}
+        disabled={controlsDisabled}
         type="submit"
       >
-        {isPending ? "保存中..." : submitLabel}
+        {isPending
+          ? "保存中..."
+          : !isOnline
+            ? "オフライン中は保存できません"
+            : submitLabel}
       </button>
     </form>
   );

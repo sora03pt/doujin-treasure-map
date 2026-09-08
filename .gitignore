@@ -13,12 +13,17 @@
 # testing
 /coverage
 /playwright-report/
+/playwright-report-pwa/
 /test-results/
 /blob-report/
 
 # next.js
 /.next/
 /out/
+
+# Serwist generated files
+/public/sw.js
+/public/sw.js.map
 
 # production
 /build

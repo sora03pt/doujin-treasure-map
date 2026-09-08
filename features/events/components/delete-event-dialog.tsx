@@ -4,6 +4,7 @@ import { useActionState, useId, useRef } from "react";
 
 import { deleteEvent } from "@/features/events/actions";
 import type { DeleteEventState } from "@/features/events/types";
+import { useConnectivity } from "@/features/offline/components/connectivity-provider";
 
 type DeleteEventDialogProps = {
   eventId: string;
@@ -28,6 +29,7 @@ export function DeleteEventDialog({
     deleteEventWithId,
     initialDeleteState,
   );
+  const { isOnline } = useConnectivity();
 
   function openDialog() {
     dialogRef.current?.showModal();
@@ -41,8 +43,14 @@ export function DeleteEventDialog({
   return (
     <>
       <button
+        aria-label={
+          isOnline
+            ? "イベントを削除"
+            : "イベントを削除（オフライン中は利用不可）"
+        }
         aria-haspopup="dialog"
         className="min-h-12 w-full rounded-lg border border-red-300 bg-white px-5 text-base font-semibold text-red-800 transition hover:bg-red-50 dark:border-red-800 dark:bg-slate-950 dark:text-red-300 dark:hover:bg-red-950"
+        disabled={!isOnline}
         onClick={openDialog}
         type="button"
       >
@@ -93,7 +101,7 @@ export function DeleteEventDialog({
             <button
               aria-live="polite"
               className="min-h-12 rounded-lg bg-red-700 px-4 text-base font-semibold text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={isPending}
+              disabled={isPending || !isOnline}
               type="submit"
             >
               {isPending ? "削除中..." : "削除する"}

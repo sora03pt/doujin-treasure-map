@@ -1,4 +1,5 @@
 import { calculateBudgetSummary } from "@/features/budget/calculation";
+import { formatYen } from "@/features/budget/format";
 import type { Circle } from "@/features/circles/types";
 import type { Item } from "@/features/items/types";
 
@@ -7,15 +8,6 @@ type BudgetSummaryProps = {
   circles: Circle[];
   items: Item[];
 };
-
-const yenFormatter = new Intl.NumberFormat("ja-JP", {
-  maximumFractionDigits: 0,
-});
-
-function formatYen(amount: number) {
-  const sign = amount < 0 ? "-" : "";
-  return `${sign}¥${yenFormatter.format(Math.abs(amount))}`;
-}
 
 export function BudgetSummary({
   plannedBudget,

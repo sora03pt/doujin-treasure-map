@@ -6,6 +6,7 @@ import type {
   EventFormState,
   EventFormValues,
 } from "@/features/events/types";
+import { useConnectivity } from "@/features/offline/components/connectivity-provider";
 
 type EventFormAction = (
   state: EventFormState,
@@ -34,6 +35,8 @@ export function EventForm({
     values: initialValues,
   });
   const errorSummaryRef = useRef<HTMLParagraphElement>(null);
+  const { isOnline } = useConnectivity();
+  const controlsDisabled = isPending || !isOnline;
 
   useEffect(() => {
     if (state.status !== "error") {
@@ -82,7 +85,7 @@ export function EventForm({
           aria-invalid={Boolean(state.fieldErrors.name)}
           className={inputClassName}
           defaultValue={state.values.name}
-          disabled={isPending}
+          disabled={controlsDisabled}
           id={fieldId("name")}
           maxLength={120}
           name="name"
@@ -110,7 +113,7 @@ export function EventForm({
           aria-invalid={Boolean(state.fieldErrors.eventDate)}
           className={inputClassName}
           defaultValue={state.values.eventDate}
-          disabled={isPending}
+          disabled={controlsDisabled}
           id={fieldId("event-date")}
           name="event_date"
           required
@@ -146,7 +149,7 @@ export function EventForm({
             aria-invalid={Boolean(state.fieldErrors.plannedBudget)}
             className={`${inputClassName} pl-8`}
             defaultValue={state.values.plannedBudget}
-            disabled={isPending}
+            disabled={controlsDisabled}
             id={fieldId("planned-budget")}
             inputMode="numeric"
             max={2147483647}
@@ -177,7 +180,7 @@ export function EventForm({
           aria-invalid={Boolean(state.fieldErrors.venue)}
           className={inputClassName}
           defaultValue={state.values.venue}
-          disabled={isPending}
+          disabled={controlsDisabled}
           id={fieldId("venue")}
           maxLength={200}
           name="venue"
@@ -204,7 +207,7 @@ export function EventForm({
           aria-invalid={Boolean(state.fieldErrors.memo)}
           className={`${inputClassName} min-h-32 py-3 leading-6`}
           defaultValue={state.values.memo}
-          disabled={isPending}
+          disabled={controlsDisabled}
           id={fieldId("memo")}
           maxLength={2000}
           name="memo"
@@ -220,10 +223,14 @@ export function EventForm({
       <button
         aria-live="polite"
         className="min-h-12 w-full rounded-lg bg-slate-950 px-5 text-base font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-950"
-        disabled={isPending}
+        disabled={controlsDisabled}
         type="submit"
       >
-        {isPending ? "保存中..." : submitLabel}
+        {isPending
+          ? "保存中..."
+          : !isOnline
+            ? "オフライン中は保存できません"
+            : submitLabel}
       </button>
     </form>
   );

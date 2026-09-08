@@ -4,7 +4,14 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseConfig, hasSupabaseConfig } from "@/lib/supabase/config";
 import type { Database } from "@/lib/supabase/database.types";
 
-const PUBLIC_PATHS = ["/login", "/auth/confirm"];
+const PUBLIC_PATHS = [
+  "/login",
+  "/auth/confirm",
+  "/api/connectivity",
+  "/manifest.webmanifest",
+  "/sw.js",
+  "/~offline",
+];
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some(
