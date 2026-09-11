@@ -165,9 +165,11 @@ IndexedDB. Snapshots contain Event/Circle/Item display data and calculated
 budget/progress summaries, but no credentials, tokens, cookies, or Supabase
 responses. Storage is separated by `userId + eventId`, limited to five recent
 Events per user, and expires after 30 days. Logout clears all local snapshots
-before the server logout action runs. Offline mutation queues and background
-sync are intentionally not implemented; write controls are disabled when the
-connectivity probe fails.
+before the server logout action runs. The unauthenticated login screen also
+clears local snapshots before enabling authentication controls, preventing a
+snapshot from carrying over after session expiry and a user switch. Offline
+mutation queues and background sync are intentionally not implemented; write
+controls are disabled when the connectivity probe fails.
 
 Production PWA verification uses a dedicated server and the same normal-user
 Supabase credentials as the other E2E tests:

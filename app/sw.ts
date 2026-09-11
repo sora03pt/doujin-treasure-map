@@ -16,6 +16,9 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope;
 
+const STATIC_CACHE_PREFIX = "doujin-treasure-map-static-";
+const STATIC_CACHE_NAME = `${STATIC_CACHE_PREFIX}v1`;
+
 const serwist = new Serwist({
   cacheId: "doujin-treasure-map",
   clientsClaim: true,
@@ -36,7 +39,7 @@ const serwist = new Serwist({
         (url.pathname.startsWith("/_next/static/") ||
           url.pathname.startsWith("/icons/")),
       handler: new CacheFirst({
-        cacheName: "safe-static-assets-v1",
+        cacheName: STATIC_CACHE_NAME,
         plugins: [
           new ExpirationPlugin({
             maxAgeSeconds: 30 * 24 * 60 * 60,
@@ -63,6 +66,24 @@ const serwist = new Serwist({
     ],
   },
   skipWaiting: true,
+});
+
+// Precache cleanup is handled by Serwist. Keep only the current app-owned
+// runtime cache when its version changes in a future service worker.
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) =>
+      Promise.all(
+        cacheNames
+          .filter(
+            (cacheName) =>
+              cacheName.startsWith(STATIC_CACHE_PREFIX) &&
+              cacheName !== STATIC_CACHE_NAME,
+          )
+          .map((cacheName) => caches.delete(cacheName)),
+      ),
+    ),
+  );
 });
 
 serwist.addEventListeners();

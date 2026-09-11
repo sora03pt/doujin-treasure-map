@@ -96,6 +96,51 @@ test("Event-day snapshotを安全にoffline表示しlogoutで削除する", asyn
     .toEqual({ controlled: true, state: "activated" });
   await expect.poll(async () => (await readOfflineStorage(page)).count).toBe(1);
 
+  await page.evaluate(async () => {
+    await fetch("/icons/app-icon-192.png?runtime-cache-test=1");
+  });
+  const cacheAudit = await page.evaluate(async () => {
+    const cacheNames = await caches.keys();
+
+    return Promise.all(
+      cacheNames.map(async (name) => ({
+        name,
+        urls: (await (await caches.open(name)).keys()).map(
+          (request) => request.url,
+        ),
+      })),
+    );
+  });
+  const runtimeCache = cacheAudit.find(
+    (cache) => cache.name === "doujin-treasure-map-static-v1",
+  );
+
+  expect(runtimeCache).toBeDefined();
+  expect(runtimeCache?.urls.length).toBeGreaterThan(0);
+  expect(
+    runtimeCache?.urls.every((url) => {
+      const pathname = new URL(url).pathname;
+      return (
+        pathname.startsWith("/_next/static/") ||
+        pathname.startsWith("/icons/")
+      );
+    }),
+  ).toBe(true);
+
+  const cachedUrls = cacheAudit.flatMap((cache) => cache.urls);
+  expect(
+    cachedUrls.some((url) => {
+      const parsedUrl = new URL(url);
+      return (
+        parsedUrl.origin !== new URL(page.url()).origin ||
+        parsedUrl.pathname.startsWith("/api/") ||
+        parsedUrl.pathname.startsWith("/auth/") ||
+        parsedUrl.pathname === "/login" ||
+        parsedUrl.pathname.startsWith("/events")
+      );
+    }),
+  ).toBe(false);
+
   await context.setOffline(true);
   await expect(page.getByText("接続: オフライン", { exact: true })).toBeVisible();
   await expect(

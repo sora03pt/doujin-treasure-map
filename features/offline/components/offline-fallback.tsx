@@ -30,6 +30,7 @@ export function OfflineFallback() {
 
     snapshotPromise
       .then(setSnapshot)
+      .catch(() => setSnapshot(null))
       .finally(() => setLoading(false));
   }, []);
 

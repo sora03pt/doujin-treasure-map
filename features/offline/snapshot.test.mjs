@@ -76,14 +76,24 @@ test("snapshotをserializeして同じユーザーとEventで復元できる", (
     items,
     savedAt,
   );
+  const serialized = serializeSnapshot(snapshot);
   const restored = restoreSnapshot(
-    serializeSnapshot(snapshot),
+    serialized,
     event.userId,
     event.id,
     now,
   );
 
   assert.deepEqual(restored, snapshot);
+  for (const forbiddenField of [
+    "access_token",
+    "refresh_token",
+    "password",
+    "publishable_key",
+    "service_role",
+  ]) {
+    assert.equal(serialized.includes(forbiddenField), false);
+  }
 });
 
 test("price、quantity、購入済みCircle、予算をsnapshotへ保持する", () => {
