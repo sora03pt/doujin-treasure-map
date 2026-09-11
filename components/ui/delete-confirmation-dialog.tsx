@@ -2,6 +2,8 @@
 
 import { useActionState, useEffect, useId, useRef } from "react";
 
+import { useConnectivity } from "@/features/offline/components/connectivity-provider";
+
 type DeleteState = {
   status: "idle" | "error";
   message: string;
@@ -32,6 +34,7 @@ export function DeleteConfirmationDialog({
   const titleId = useId();
   const descriptionId = useId();
   const [state, formAction, isPending] = useActionState(action, initialState);
+  const { isOnline } = useConnectivity();
 
   useEffect(() => {
     if (state.status === "error") {
@@ -51,8 +54,12 @@ export function DeleteConfirmationDialog({
   return (
     <>
       <button
+        aria-label={
+          isOnline ? triggerLabel : `${triggerLabel}（オフライン中は利用不可）`
+        }
         aria-haspopup="dialog"
         className="min-h-11 rounded-lg px-3 text-sm font-semibold text-red-800 underline-offset-4 hover:bg-red-50 hover:underline dark:text-red-300 dark:hover:bg-red-950"
+        disabled={!isOnline}
         onClick={openDialog}
         ref={triggerRef}
         type="button"
@@ -107,7 +114,7 @@ export function DeleteConfirmationDialog({
             <button
               aria-live="polite"
               className="min-h-12 rounded-lg bg-red-700 px-4 text-base font-semibold text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={isPending}
+              disabled={isPending || !isOnline}
               type="submit"
             >
               {isPending ? "削除中..." : "削除する"}

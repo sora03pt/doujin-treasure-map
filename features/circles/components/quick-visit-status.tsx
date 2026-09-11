@@ -7,6 +7,7 @@ import type {
   QuickVisitStatusState,
   VisitStatus,
 } from "@/features/circles/types";
+import { useConnectivity } from "@/features/offline/components/connectivity-provider";
 
 type QuickVisitStatusAction = (
   state: QuickVisitStatusState,
@@ -30,13 +31,14 @@ export function QuickVisitStatus({
     visitStatus: initialVisitStatus,
   };
   const [state, formAction, isPending] = useActionState(action, initialState);
+  const { isOnline } = useConnectivity();
   const currentVisitStatus =
     state.status === "idle" ? initialVisitStatus : state.visitStatus;
 
   return (
     <div>
       <form action={formAction} aria-busy={isPending}>
-        <fieldset disabled={isPending}>
+        <fieldset disabled={isPending || !isOnline}>
           <legend className="text-sm font-semibold">
             {circleName}の訪問状態
           </legend>
@@ -68,6 +70,10 @@ export function QuickVisitStatus({
       {isPending ? (
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300" role="status">
           更新中...
+        </p>
+      ) : !isOnline ? (
+        <p className="mt-2 text-sm font-medium text-amber-800 dark:text-amber-200">
+          オフライン中は訪問状態を変更できません。
         </p>
       ) : state.message ? (
         <p
