@@ -4,14 +4,11 @@
 
 コミケ、赤ブー、COMITIAなど、任意の同人イベントで使える個人用Webアプリとして設計します。特定イベント専用にはせず、ユーザーが公式PDFや画像、Webカタログ、Xなどを自分で参照しながら、行きたいサークル・欲しい頒布物・優先度・予算・訪問状態を登録する方式を基本にします。
 
-## Current Status
+## 現在の状況
 
-Phase 7 branch: `codex/phase-7-pwa-offline`
+Phase 7までのMVP機能を実装済みです。認証、Event・Circle・ItemのCRUD、イベント当日画面、予算サマリー、自動Quality Gate、読み取り専用のオフラインスナップショットに対応しています。
 
-The MVP currently includes Auth, Event/Circle/Item CRUD, the event-day view,
-budget summaries, automated quality gates, and read-only offline snapshots.
-
-## Tech Stack
+## 技術スタック
 
 - Next.js App Router
 - React
@@ -21,56 +18,56 @@ budget summaries, automated quality gates, and read-only offline snapshots.
 - PostgreSQL
 - Supabase Auth
 - Serwist PWA
-- IndexedDB offline snapshots
+- IndexedDBによるオフラインスナップショット
 - Vercel
 
-Supabase uses cookie-based SSR helpers and the browser-safe publishable key. Do not put a Service Role Key or secret key in this repository or in browser code.
+SupabaseはCookieベースのSSRヘルパーと、ブラウザで安全に利用できるPublishable keyを使用します。Service Role KeyやSecret keyを、このリポジトリやブラウザコードへ含めないでください。
 
-## Product Principles
+## プロダクト方針
 
-- Any doujin event can be registered by the user.
-- Do not hardcode specific event names into product logic.
-- Do not scrape event catalog services unless an official API and permission are confirmed.
-- Do not commit official event logos, trademarks, paid catalog data, or map images without rights.
-- Event-day mobile operation matters more than decorative UI.
-- Map pins, sharing, OCR, and monetization remain future phases.
+- ユーザーが任意の同人イベントを登録できるようにする。
+- 特定のイベント名をプロダクトロジックへハードコードしない。
+- 公式APIと利用許可を確認できないイベントカタログサービスをスクレイピングしない。
+- 公式ロゴ、商標、有料カタログデータ、権利のない地図画像をcommitしない。
+- 装飾性よりもイベント当日のスマートフォン操作を優先する。
+- 地図へのpin配置、共有、OCR、収益化は将来フェーズとして扱う。
 
-## MVP Summary
+## MVP概要
 
-### Event
+### イベント（Event）
 
-- Event name
-- Event date
-- Venue
-- Memo
-- Planned budget
+- イベント名
+- 開催日
+- 会場
+- メモ
+- 予定予算
 
-### Circle
+### サークル（Circle）
 
-- Circle name
-- Space number
+- サークル名
+- スペース番号
 - X URL
 - Web URL
-- Memo
-- Priority: 最優先 / 行きたい / 時間があれば
-- Assignee
-- Visit status: 未訪問 / 購入済み / 売り切れ / スキップ
+- メモ
+- 優先度: 最優先 / 行きたい / 時間があれば
+- 担当者
+- 訪問状態: 未訪問 / 購入済み / 売り切れ / スキップ
 
-### Item
+### 頒布物（Item）
 
-- Item name
-- Price
-- Quantity
-- Memo
-- Purchased
+- 頒布物名
+- 価格
+- 数量
+- メモ
+- 購入済み状態
 
-### Budget
+### 予算（Budget）
 
-- Planned amount
-- Purchased amount
-- Remaining amount
+- 予定金額
+- 購入済み金額
+- 残り予算
 
-### Event-Day Filters
+### イベント当日フィルター
 
 - 最優先だけ
 - 未訪問だけ
@@ -78,62 +75,60 @@ Supabase uses cookie-based SSR helpers and the browser-safe publishable key. Do 
 - 担当者
 - スペース番号
 
-## Directory Structure
+## ディレクトリ構成
 
 ```text
-app/                       Next.js App Router routes
-components/ui/             Shared UI primitives
-docs/                      Product, DB, RLS, screen, and phase docs
+app/                       Next.js App RouterのRoute
+components/ui/             共通UI primitive
+docs/                      プロダクト、DB、RLS、画面、Phaseの設計資料
 features/
-  budget/                  Budget calculation and types
-  circles/                 Circle domain
-  events/                  Event domain
-  items/                   Item domain
-  map/                     Future map asset and pin domain
-  offline/                 Connectivity and offline Event-day snapshots
-lib/                       Cross-feature utilities
+  budget/                  予算計算と型
+  circles/                 Circleドメイン
+  events/                  Eventドメイン
+  items/                   Itemドメイン
+  map/                     将来の地図画像・pinドメイン
+  offline/                 接続状態とイベント当日スナップショット
+lib/                       機能横断のユーティリティ
 supabase/
-  migrations/              Supabase schema and migrations
+  migrations/              Supabase schemaとmigration
 ```
 
-## Documentation
+## ドキュメント
 
-- [MVP specification](docs/product-spec.md)
-- [Screen plan](docs/screens.md)
-- [Database design](docs/database.md)
-- [RLS policy](docs/rls.md)
-- [Phase plan](docs/phases.md)
-- [Repository decisions](docs/repository-decisions.md)
+- [MVP仕様](docs/product-spec.md)
+- [画面設計](docs/screens.md)
+- [データベース設計](docs/database.md)
+- [RLS方針](docs/rls.md)
+- [Phase計画](docs/phases.md)
+- [リポジトリ設計判断](docs/repository-decisions.md)
 
-## Development
+## 開発環境
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+`http://localhost:3000` を開きます。
 
-The service worker is disabled in development so that stale caches do not
-interfere with debugging. Use `npm run build` followed by `npm run start` to
-verify production PWA behavior.
+古いキャッシュがデバッグへ影響しないよう、開発環境ではService Workerを無効にしています。本番環境のPWA動作を確認する場合は、`npm run build`の後に`npm run start`を実行してください。
 
-## Supabase Setup
+## Supabaseセットアップ
 
-Create a Supabase project, then copy `.env.example` to `.env.local` and fill in:
+Supabaseプロジェクトを作成し、`.env.example`を`.env.local`へコピーして以下を設定します。
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=...
 ```
 
-Apply all migrations to the linked project:
+リンク済みプロジェクトへすべてのmigrationを適用します。
 
 ```bash
 npx supabase db push
 ```
 
-In Supabase Auth, enable Email/Password sign-in. Add these local redirect URLs:
+Supabase AuthでEmail/Password認証を有効にし、次のローカルRedirect URLを追加します。
 
 ```text
 http://localhost:3000/auth/confirm
@@ -144,14 +139,9 @@ http://127.0.0.1:3100/auth/confirm
 http://127.0.0.1:3100/**
 ```
 
-The origin used to open the app must be present under Authentication > URL
-Configuration > Redirect URLs. Supabase falls back to the configured Site URL
-when `emailRedirectTo` is not allow-listed, so add the exact hostname and port
-used during development. Set Site URL to the production origin before release.
-The callback accepts both PKCE `code` links and customized `token_hash` email
-templates.
+アプリを開く際に使用するオリジンを、Supabase Dashboardの「Authentication > URL Configuration > Redirect URLs」へ登録する必要があります。`emailRedirectTo`が許可されていない場合、Supabaseは設定済みのSite URLへフォールバックするため、開発時に使用するホスト名とポートを正確に追加してください。リリース前にはSite URLを本番環境のオリジンへ変更します。認証コールバックは、PKCEの`code`とカスタマイズされたメールテンプレートの`token_hash`の両方に対応しています。
 
-Validation commands:
+検証コマンド:
 
 ```bash
 npm run lint
@@ -160,40 +150,27 @@ npm run test:unit
 npm run build
 ```
 
-## PWA / Offline
+## PWA / オフライン
 
-The production build runs Next.js and then Serwist Configurator mode to create
-`public/sw.js`. The generated file is ignored by Git and rebuilt in CI and on
-deployment.
+本番ビルドではNext.jsのbuild後にSerwist Configurator modeを実行し、`public/sw.js`を生成します。生成ファイルはGitの管理対象外であり、CIとデプロイ時に再生成します。
 
-The service worker precaches the public offline fallback, manifest, icons, and
-build assets. Runtime caching is limited to `/_next/static/` and `/icons/`.
-Navigation, RSC, API, Supabase, user images, and authentication responses use
-the network and are not stored in runtime caches.
+Service Workerは、公開オフラインフォールバック、manifest、icon、build assetをプリキャッシュします。ランタイムキャッシュの対象は`/_next/static/`と`/icons/`だけです。Navigation、RSC、API、Supabase、ユーザー画像、認証レスポンスはネットワークを使用し、ランタイムキャッシュへ保存しません。
 
-Opening an Event online saves a minimal read-only Event-day snapshot to
-IndexedDB. Snapshots contain Event/Circle/Item display data and calculated
-budget/progress summaries, but no credentials, tokens, cookies, or Supabase
-responses. Storage is separated by `userId + eventId`, limited to five recent
-Events per user, and expires after 30 days. Logout clears all local snapshots
-before the server logout action runs. The unauthenticated login screen also
-clears local snapshots before enabling authentication controls, preventing a
-snapshot from carrying over after session expiry and a user switch. Offline
-mutation queues and background sync are intentionally not implemented; write
-controls are disabled when the connectivity probe fails.
+オンライン中にEventを開くと、イベント当日画面に必要な最小限の読み取り専用スナップショットをIndexedDBへ保存します。スナップショットにはEvent・Circle・Itemの表示データと、計算済みの予算・進捗サマリーを含めます。資格情報、トークン、Cookie、Supabaseレスポンスは保存しません。
 
-Production PWA verification uses a dedicated server and the same normal-user
-Supabase credentials as the other E2E tests:
+保存領域は`userId + eventId`で分離し、ユーザーごとに直近5Event、保存期間30日を上限とします。ログアウト時はserver logout actionの実行前にローカルスナップショットをすべて削除します。未認証のログイン画面でも、認証操作を有効にする前にローカルスナップショットを削除し、session期限切れやユーザー切り替え後のデータ持ち越しを防ぎます。
+
+オフラインmutation queueとbackground syncは実装していません。接続確認に失敗している間は更新操作を無効にします。
+
+本番PWA検証では専用サーバーと、他のE2Eテストと同じ通常Supabaseユーザーを使用します。
 
 ```bash
 E2E_ALLOW_REMOTE_TESTS=true npm run test:e2e:pwa
 ```
 
-## E2E / Accessibility
+## E2E / アクセシビリティ
 
-Playwright E2E must use a dedicated test Supabase project and a normal Auth
-user. Never configure these values with a production project or a service role
-key.
+Playwright E2Eでは、専用のテスト用Supabaseプロジェクトと通常Authユーザーを使用してください。本番プロジェクトやService Role Keyを設定してはいけません。
 
 ```bash
 E2E_SUPABASE_URL=...
@@ -204,31 +181,25 @@ E2E_ALLOW_REMOTE_TESTS=true
 npm run test:e2e
 ```
 
-Local runs may use `TEST_USER_A_EMAIL` and `TEST_USER_A_PASSWORD` as credential
-fallbacks. Test events use a unique `E2E-*` prefix and are deleted through RLS
-as the same normal user after each test.
+ローカル実行では、資格情報のfallbackとして`TEST_USER_A_EMAIL`と`TEST_USER_A_PASSWORD`も使用できます。テストEventには一意な`E2E-*` prefixを付け、各テスト後に同じ通常ユーザーがRLSを通して削除します。
 
-GitHub Actions requires these repository secrets:
+GitHub Actionsには次のRepository secretsが必要です。
 
 - `E2E_SUPABASE_URL`
 - `E2E_SUPABASE_PUBLISHABLE_KEY`
 - `E2E_USER_EMAIL`
 - `E2E_USER_PASSWORD`
 
-The Quality Gate runs lint, typecheck, unit tests, production build, Chromium
-E2E, mobile E2E, production PWA/offline E2E, and axe checks. Failed CI runs
-retain reports and screenshots for seven days. CI traces are disabled because
-authenticated traces can contain test credentials or session tokens; local
-traces stay under ignored test output.
+Quality Gateではlint、typecheck、unit test、本番ビルド、Chromium E2E、mobile E2E、本番PWA・offline E2E、axe検査を実行します。CI失敗時のレポートとscreenshotは7日間保存します。認証済みtraceにはテスト資格情報やsession tokenが含まれる可能性があるため、CIではtraceを無効にしています。ローカルのtraceはGit管理対象外のテスト出力へ保存します。
 
-## Auth Check
+## 認証フロー
 
-Expected MVP auth flow:
+MVPの認証フローは次のとおりです。
 
-- Unauthenticated users visiting `/` or `/events/**` are redirected to `/login`.
-- `/login` supports sign up and login with email/password.
-- Successful email confirmation shows `/auth/complete` before the event list.
-- Logged-in users visiting `/login` are redirected to the event list.
-- Event list shows an empty state when the user owns no events.
+- 未認証ユーザーが`/`または`/events/**`へアクセスすると、`/login`へredirectする。
+- `/login`でメールアドレスとパスワードによる新規登録・ログインができる。
+- メール確認に成功すると、Event一覧の前に`/auth/complete`を表示する。
+- ログイン済みユーザーが`/login`へアクセスすると、Event一覧へredirectする。
+- 所有するEventがない場合、Event一覧にEmpty Stateを表示する。
 
-Do not expose the Service Role Key to the browser.
+Service Role Keyをブラウザへ公開しないでください。
