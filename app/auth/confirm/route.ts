@@ -3,16 +3,30 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 
+function redirectWithinApp(location: string) {
+  return new NextResponse(null, {
+    status: 303,
+    headers: { location },
+  });
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
+  const code = searchParams.get("code");
+  const flowId = searchParams.get("sb_flow_id");
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
-  const redirectTo = request.nextUrl.clone();
+  if (code) {
+    const supabase = await createClient();
+    const { error } = await supabase.auth.exchangeCodeForSession(
+      code,
+      flowId ? { flowId } : undefined,
+    );
 
-  redirectTo.pathname = "/";
-  redirectTo.search = "";
-
-  if (tokenHash && type) {
+    if (!error) {
+      return redirectWithinApp("/auth/complete");
+    }
+  } else if (tokenHash && type) {
     const supabase = await createClient();
     const { error } = await supabase.auth.verifyOtp({
       type,
@@ -20,14 +34,12 @@ export async function GET(request: NextRequest) {
     });
 
     if (!error) {
-      return NextResponse.redirect(redirectTo);
+      return redirectWithinApp("/auth/complete");
     }
   }
 
-  redirectTo.pathname = "/login";
-  redirectTo.searchParams.set(
-    "message",
-    "メール認証リンクを確認できませんでした。",
-  );
-  return NextResponse.redirect(redirectTo);
+  const query = new URLSearchParams({
+    message: "メール認証リンクを確認できませんでした。",
+  });
+  return redirectWithinApp(`/login?${query}`);
 }

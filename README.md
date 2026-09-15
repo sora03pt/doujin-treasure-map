@@ -138,7 +138,18 @@ In Supabase Auth, enable Email/Password sign-in. Add these local redirect URLs:
 ```text
 http://localhost:3000/auth/confirm
 http://localhost:3000/**
+http://localhost:3100/auth/confirm
+http://localhost:3100/**
+http://127.0.0.1:3100/auth/confirm
+http://127.0.0.1:3100/**
 ```
+
+The origin used to open the app must be present under Authentication > URL
+Configuration > Redirect URLs. Supabase falls back to the configured Site URL
+when `emailRedirectTo` is not allow-listed, so add the exact hostname and port
+used during development. Set Site URL to the production origin before release.
+The callback accepts both PKCE `code` links and customized `token_hash` email
+templates.
 
 Validation commands:
 
@@ -216,6 +227,7 @@ Expected MVP auth flow:
 
 - Unauthenticated users visiting `/` or `/events/**` are redirected to `/login`.
 - `/login` supports sign up and login with email/password.
+- Successful email confirmation shows `/auth/complete` before the event list.
 - Logged-in users visiting `/login` are redirected to the event list.
 - Event list shows an empty state when the user owns no events.
 
