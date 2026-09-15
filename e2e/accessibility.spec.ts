@@ -6,7 +6,7 @@ test("loginにcritical / seriousのaxe違反がない", async ({ page }) => {
   await expectNoSeriousAccessibilityViolations(page);
 });
 
-test("Event一覧・作成・詳細・編集にcritical / seriousのaxe違反がない", async ({
+test("登録完了・Event主要画面にcritical / seriousのaxe違反がない", async ({
   loginAsTestUser,
   page,
   seedEvent,
@@ -14,6 +14,9 @@ test("Event一覧・作成・詳細・編集にcritical / seriousのaxe違反が
   const event = await seedEvent({ plannedBudget: 10_000 });
 
   await loginAsTestUser();
+  await expectNoSeriousAccessibilityViolations(page);
+
+  await page.goto("/auth/complete");
   await expectNoSeriousAccessibilityViolations(page);
 
   await page.goto("/events/new");

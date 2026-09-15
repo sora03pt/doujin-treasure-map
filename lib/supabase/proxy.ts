@@ -38,6 +38,14 @@ function withPendingAuthCookies(
 export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
+  // Supabase falls back to Site URL when a requested redirect is not allow-listed.
+  // Preserve those already-issued PKCE links by forwarding them to the callback.
+  if (pathname === "/" && request.nextUrl.searchParams.has("code")) {
+    const callbackUrl = request.nextUrl.clone();
+    callbackUrl.pathname = "/auth/confirm";
+    return NextResponse.redirect(callbackUrl);
+  }
+
   if (!hasSupabaseConfig()) {
     if (isPublicPath(pathname)) {
       return NextResponse.next({ request });
