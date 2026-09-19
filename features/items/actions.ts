@@ -7,10 +7,17 @@ import { isCircleId } from "@/features/circles/validation";
 import { isEventId } from "@/features/events/validation";
 import {
   createItemForCurrentUser,
+  deleteItemImageForCurrentUser,
   deleteItemForCurrentUser,
+  uploadItemImageForCurrentUser,
   updateItemForCurrentUser,
 } from "@/features/items/data";
-import type { DeleteItemState, ItemFormState } from "@/features/items/types";
+import type {
+  DeleteItemState,
+  ItemFormState,
+  ReferenceImageActionState,
+} from "@/features/items/types";
+import { readReferenceImage } from "@/features/images/validation";
 import { isItemId, validateItemForm } from "@/features/items/validation";
 
 function invalidOwnershipState(values: ItemFormState["values"]): ItemFormState {
@@ -20,6 +27,10 @@ function invalidOwnershipState(values: ItemFormState["values"]): ItemFormState {
     fieldErrors: {},
     values,
   };
+}
+
+function imageActionError(message: string): ReferenceImageActionState {
+  return { status: "error", message };
 }
 
 export async function createItem(
@@ -165,4 +176,76 @@ export async function deleteItem(
 
   revalidatePath(`/events/${eventId}`);
   redirect(`/events/${eventId}?notice=item-deleted#circle-${circleId}`);
+}
+
+export async function uploadItemImage(
+  eventId: string,
+  circleId: string,
+  itemId: string,
+  _previousState: ReferenceImageActionState,
+  formData: FormData,
+): Promise<ReferenceImageActionState> {
+  void _previousState;
+
+  if (!isEventId(eventId) || !isCircleId(circleId) || !isItemId(itemId)) {
+    return imageActionError("頒布物が見つからないか、操作権限がありません。");
+  }
+
+  const image = await readReferenceImage(formData);
+
+  if (!image.ok) {
+    return imageActionError(image.message);
+  }
+
+  const result = await uploadItemImageForCurrentUser(
+    eventId,
+    circleId,
+    itemId,
+    image.file,
+  );
+
+  if (result.status === "unauthenticated") {
+    redirect("/login");
+  }
+
+  if (result.status === "not_found") {
+    return imageActionError("頒布物が見つからないか、操作権限がありません。");
+  }
+
+  if (result.status === "error") {
+    return imageActionError("画像を保存できませんでした。時間をおいて再度お試しください。");
+  }
+
+  revalidatePath(`/events/${eventId}`);
+  return { status: "success", message: "画像を保存しました。" };
+}
+
+export async function deleteItemImage(
+  eventId: string,
+  circleId: string,
+  itemId: string,
+  _previousState: ReferenceImageActionState,
+): Promise<ReferenceImageActionState> {
+  void _previousState;
+
+  if (!isEventId(eventId) || !isCircleId(circleId) || !isItemId(itemId)) {
+    return imageActionError("頒布物が見つからないか、操作権限がありません。");
+  }
+
+  const result = await deleteItemImageForCurrentUser(eventId, circleId, itemId);
+
+  if (result.status === "unauthenticated") {
+    redirect("/login");
+  }
+
+  if (result.status === "not_found") {
+    return imageActionError("頒布物が見つからないか、操作権限がありません。");
+  }
+
+  if (result.status === "error") {
+    return imageActionError("画像を削除できませんでした。時間をおいて再度お試しください。");
+  }
+
+  revalidatePath(`/events/${eventId}`);
+  return { status: "success", message: "画像を削除しました。" };
 }

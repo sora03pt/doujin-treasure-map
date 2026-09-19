@@ -1,6 +1,12 @@
 import "server-only";
 
 import type { Item, ValidatedItemInput } from "@/features/items/types";
+import {
+  createSignedImageUrlMap,
+  itemImagePath,
+  removeReferenceImages,
+  uploadReferenceImage,
+} from "@/features/images/storage";
 import { createClient } from "@/lib/supabase/server";
 
 async function getAuthenticatedContext() {
@@ -95,18 +101,21 @@ function toItem(row: {
   circle_id: string;
   user_id: string;
   name: string;
+  image_path: string | null;
   price: number | null;
   quantity: number;
   memo: string | null;
   purchased: boolean;
   created_at: string;
   updated_at: string;
-}): Item {
+}, imageUrl: string | null = null): Item {
   return {
     id: row.id,
     circleId: row.circle_id,
     userId: row.user_id,
     name: row.name,
+    imagePath: row.image_path,
+    imageUrl,
     price: row.price,
     quantity: row.quantity,
     memo: row.memo,
@@ -139,7 +148,7 @@ export async function listItemsForCurrentUser(circleIds: string[]) {
   const { data, error } = await context.supabase
     .from("items")
     .select(
-      "id,circle_id,user_id,name,price,quantity,memo,purchased,created_at,updated_at",
+      "id,circle_id,user_id,name,image_path,price,quantity,memo,purchased,created_at,updated_at",
     )
     .in("circle_id", circleIds)
     .eq("user_id", context.userId)
@@ -150,9 +159,16 @@ export async function listItemsForCurrentUser(circleIds: string[]) {
     return { status: "error" as const, items: [] };
   }
 
+  const imageUrls = await createSignedImageUrlMap(
+    context.supabase,
+    (data ?? []).map((row) => row.image_path),
+  );
+
   return {
     status: "success" as const,
-    items: (data ?? []).map(toItem),
+    items: (data ?? []).map((row) =>
+      toItem(row, row.image_path ? imageUrls.get(row.image_path) ?? null : null),
+    ),
   };
 }
 
@@ -245,6 +261,36 @@ export async function deleteItemForCurrentUser(
     return ownership;
   }
 
+  const { data: item, error: loadError } = await context.supabase
+    .from("items")
+    .select("id,image_path")
+    .eq("id", itemId)
+    .eq("circle_id", circleId)
+    .eq("user_id", context.userId)
+    .maybeSingle();
+
+  if (loadError) {
+    console.error("Failed to load item image before deletion", {
+      code: loadError.code,
+    });
+    return { status: "error" as const };
+  }
+
+  if (!item) {
+    return { status: "not_found" as const };
+  }
+
+  const imageRemoval = await removeReferenceImages(context.supabase, [
+    item.image_path,
+  ]);
+
+  if (imageRemoval.status === "error") {
+    console.error("Failed to remove item reference image", {
+      code: imageRemoval.code,
+    });
+    return { status: "error" as const };
+  }
+
   const { data, error } = await context.supabase
     .from("items")
     .delete()
@@ -262,4 +308,119 @@ export async function deleteItemForCurrentUser(
   return data
     ? { status: "success" as const }
     : { status: "not_found" as const };
+}
+
+export async function uploadItemImageForCurrentUser(
+  eventId: string,
+  circleId: string,
+  itemId: string,
+  file: File,
+) {
+  const context = await getAuthenticatedContext();
+
+  if (!context) {
+    return { status: "unauthenticated" as const };
+  }
+
+  const ownership = await findOwnedItem(context, eventId, circleId, itemId);
+
+  if (ownership.status !== "owned") {
+    return ownership;
+  }
+
+  const { data: item, error: loadError } = await context.supabase
+    .from("items")
+    .select("image_path")
+    .eq("id", itemId)
+    .eq("circle_id", circleId)
+    .eq("user_id", context.userId)
+    .maybeSingle();
+
+  if (loadError || !item) {
+    return { status: loadError ? "error" as const : "not_found" as const };
+  }
+
+  const path = itemImagePath(context.userId, itemId);
+  const upload = await uploadReferenceImage(context.supabase, path, file);
+
+  if (upload.status === "error") {
+    console.error("Failed to upload item reference image", { code: upload.code });
+    return { status: "error" as const };
+  }
+
+  if (item.image_path === path) {
+    return { status: "success" as const };
+  }
+
+  const { data, error } = await context.supabase
+    .from("items")
+    .update({ image_path: path })
+    .eq("id", itemId)
+    .eq("circle_id", circleId)
+    .eq("user_id", context.userId)
+    .select("id")
+    .maybeSingle();
+
+  if (error || !data) {
+    await removeReferenceImages(context.supabase, [path]);
+    console.error("Failed to save item reference image path", {
+      code: error?.code ?? null,
+    });
+    return { status: error ? "error" as const : "not_found" as const };
+  }
+
+  return { status: "success" as const };
+}
+
+export async function deleteItemImageForCurrentUser(
+  eventId: string,
+  circleId: string,
+  itemId: string,
+) {
+  const context = await getAuthenticatedContext();
+
+  if (!context) {
+    return { status: "unauthenticated" as const };
+  }
+
+  const ownership = await findOwnedItem(context, eventId, circleId, itemId);
+
+  if (ownership.status !== "owned") {
+    return ownership;
+  }
+
+  const { data: item, error: loadError } = await context.supabase
+    .from("items")
+    .select("image_path")
+    .eq("id", itemId)
+    .eq("circle_id", circleId)
+    .eq("user_id", context.userId)
+    .maybeSingle();
+
+  if (loadError || !item) {
+    return { status: loadError ? "error" as const : "not_found" as const };
+  }
+
+  const removal = await removeReferenceImages(context.supabase, [item.image_path]);
+
+  if (removal.status === "error") {
+    console.error("Failed to delete item reference image", { code: removal.code });
+    return { status: "error" as const };
+  }
+
+  const { data, error } = await context.supabase
+    .from("items")
+    .update({ image_path: null })
+    .eq("id", itemId)
+    .eq("circle_id", circleId)
+    .eq("user_id", context.userId)
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    console.error("Failed to clear item reference image path", { code: error.code });
+    return { status: "error" as const };
+  }
+
+  return data ? { status: "success" as const } : { status: "not_found" as const };
 }

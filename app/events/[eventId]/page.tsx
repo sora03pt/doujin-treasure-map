@@ -11,6 +11,7 @@ import { DeleteEventDialog } from "@/features/events/components/delete-event-dia
 import { EventForm } from "@/features/events/components/event-form";
 import { getEventForCurrentUser } from "@/features/events/data";
 import { isEventId } from "@/features/events/validation";
+import { getVenueFormSelection } from "@/features/events/venue";
 import { listItemsForCurrentUser } from "@/features/items/data";
 import { EventDaySnapshotManager } from "@/features/offline/components/event-day-snapshot-manager";
 import { createEventDaySnapshot } from "@/features/offline/snapshot";
@@ -102,6 +103,7 @@ export default async function EventDetailPage({
     circlesResult.circles,
     itemsResult.items,
   );
+  const venueSelection = getVenueFormSelection(event.venue);
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-5 text-slate-950 sm:px-6 lg:px-8 dark:bg-slate-950 dark:text-slate-50">
@@ -164,7 +166,8 @@ export default async function EventDetailPage({
                   name: event.name,
                   eventDate: event.eventDate,
                   plannedBudget: event.plannedBudget?.toString() ?? "",
-                  venue: event.venue ?? "",
+                  venuePreset: venueSelection.preset,
+                  venueCustom: venueSelection.custom,
                   memo: event.memo ?? "",
                 }}
                 submitLabel="変更を保存"

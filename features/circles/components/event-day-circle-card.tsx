@@ -1,8 +1,11 @@
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
+import { ImagePreviewDialog } from "@/components/ui/image-preview-dialog";
 import {
+  deleteCircleImage,
   deleteCircle,
   quickUpdateCircleVisitStatus,
   updateCircle,
+  uploadCircleImage,
 } from "@/features/circles/actions";
 import { CircleForm } from "@/features/circles/components/circle-form";
 import { QuickVisitStatus } from "@/features/circles/components/quick-visit-status";
@@ -18,6 +21,7 @@ import type {
 } from "@/features/circles/types";
 import { ItemList } from "@/features/items/components/item-list";
 import type { Item } from "@/features/items/types";
+import { ReferenceImageManager } from "@/features/images/components/reference-image-manager";
 
 type EventDayCircleCardProps = {
   eventId: string;
@@ -62,6 +66,8 @@ export function EventDayCircleCard({
     circle.id,
   );
   const deleteCircleWithIds = deleteCircle.bind(null, eventId, circle.id);
+  const uploadCircleImageWithIds = uploadCircleImage.bind(null, eventId, circle.id);
+  const deleteCircleImageWithIds = deleteCircleImage.bind(null, eventId, circle.id);
 
   return (
     <li
@@ -85,7 +91,26 @@ export function EventDayCircleCard({
                 担当: {circle.assignee ?? "未設定"}
               </p>
             </div>
+            {circle.imageUrl ? (
+              <ImagePreviewDialog
+                alt={`${circle.name}の参照画像`}
+                src={circle.imageUrl}
+                thumbnailClassName="h-16 w-16 sm:h-20 sm:w-20"
+              />
+            ) : null}
           </div>
+
+          {circle.distributionPostUrl ? (
+            <a
+              aria-label={`${circle.name}の頒布情報をXで見る（外部サイト、新しいタブ）`}
+              className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-blue-700 underline-offset-4 hover:underline dark:text-blue-300"
+              href={circle.distributionPostUrl}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              Xで頒布情報を見る（外部）
+            </a>
+          ) : null}
 
           <div className="mt-3 flex flex-wrap gap-2">
             <span
@@ -148,8 +173,15 @@ export function EventDayCircleCard({
                       visitStatus: circle.visitStatus,
                       memo: circle.memo ?? "",
                       assignee: circle.assignee ?? "",
+                      distributionPostUrl: circle.distributionPostUrl ?? "",
                     }}
                     submitLabel="サークルを更新"
+                  />
+                  <ReferenceImageManager
+                    alt={`${circle.name}の参照画像`}
+                    deleteAction={deleteCircleImageWithIds}
+                    imageUrl={circle.imageUrl}
+                    uploadAction={uploadCircleImageWithIds}
                   />
                 </div>
               </section>

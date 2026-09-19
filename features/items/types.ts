@@ -7,6 +7,8 @@ export type Item = {
   circleId: CircleId;
   userId: string;
   name: string;
+  imagePath: string | null;
+  imageUrl: string | null;
   price: number | null;
   quantity: number;
   memo: string | null;
@@ -33,6 +35,11 @@ export type ItemFormState = {
 
 export type DeleteItemState = {
   status: "idle" | "error";
+  message: string;
+};
+
+export type ReferenceImageActionState = {
+  status: "idle" | "success" | "error";
   message: string;
 };
 

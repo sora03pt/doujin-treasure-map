@@ -5,7 +5,9 @@ import { redirect } from "next/navigation";
 
 import {
   createCircleForCurrentUser,
+  deleteCircleImageForCurrentUser,
   deleteCircleForCurrentUser,
+  uploadCircleImageForCurrentUser,
   updateCircleForCurrentUser,
   updateCircleVisitStatusForCurrentUser,
 } from "@/features/circles/data";
@@ -13,7 +15,9 @@ import type {
   CircleFormState,
   DeleteCircleState,
   QuickVisitStatusState,
+  ReferenceImageActionState,
 } from "@/features/circles/types";
+import { readReferenceImage } from "@/features/images/validation";
 import {
   isCircleId,
   isVisitStatus,
@@ -28,6 +32,10 @@ function invalidOwnershipState(values: CircleFormState["values"]): CircleFormSta
     fieldErrors: {},
     values,
   };
+}
+
+function imageActionError(message: string): ReferenceImageActionState {
+  return { status: "error", message };
 }
 
 export async function createCircle(
@@ -213,4 +221,73 @@ export async function quickUpdateCircleVisitStatus(
     message: "訪問状態を更新しました。",
     visitStatus,
   };
+}
+
+export async function uploadCircleImage(
+  eventId: string,
+  circleId: string,
+  _previousState: ReferenceImageActionState,
+  formData: FormData,
+): Promise<ReferenceImageActionState> {
+  void _previousState;
+
+  if (!isEventId(eventId) || !isCircleId(circleId)) {
+    return imageActionError("サークルが見つからないか、操作権限がありません。");
+  }
+
+  const image = await readReferenceImage(formData);
+
+  if (!image.ok) {
+    return imageActionError(image.message);
+  }
+
+  const result = await uploadCircleImageForCurrentUser(
+    eventId,
+    circleId,
+    image.file,
+  );
+
+  if (result.status === "unauthenticated") {
+    redirect("/login");
+  }
+
+  if (result.status === "not_found") {
+    return imageActionError("サークルが見つからないか、操作権限がありません。");
+  }
+
+  if (result.status === "error") {
+    return imageActionError("画像を保存できませんでした。時間をおいて再度お試しください。");
+  }
+
+  revalidatePath(`/events/${eventId}`);
+  return { status: "success", message: "画像を保存しました。" };
+}
+
+export async function deleteCircleImage(
+  eventId: string,
+  circleId: string,
+  _previousState: ReferenceImageActionState,
+): Promise<ReferenceImageActionState> {
+  void _previousState;
+
+  if (!isEventId(eventId) || !isCircleId(circleId)) {
+    return imageActionError("サークルが見つからないか、操作権限がありません。");
+  }
+
+  const result = await deleteCircleImageForCurrentUser(eventId, circleId);
+
+  if (result.status === "unauthenticated") {
+    redirect("/login");
+  }
+
+  if (result.status === "not_found") {
+    return imageActionError("サークルが見つからないか、操作権限がありません。");
+  }
+
+  if (result.status === "error") {
+    return imageActionError("画像を削除できませんでした。時間をおいて再度お試しください。");
+  }
+
+  revalidatePath(`/events/${eventId}`);
+  return { status: "success", message: "画像を削除しました。" };
 }

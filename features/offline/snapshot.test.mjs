@@ -30,6 +30,9 @@ const circles = [
     eventId: event.id,
     userId: event.userId,
     name: "テストサークル",
+    imagePath: "user-a/circles/circle-a/reference",
+    imageUrl: "https://storage.example.test/signed-circle-image",
+    distributionPostUrl: "https://x.com/test/status/123",
     spaceNumber: "A01",
     xUrl: null,
     webUrl: null,
@@ -47,6 +50,8 @@ const items = [
     circleId: circles[0].id,
     userId: event.userId,
     name: "新刊",
+    imagePath: "user-a/items/item-priced/reference",
+    imageUrl: "https://storage.example.test/signed-item-image",
     price: 700,
     quantity: 2,
     memo: null,
@@ -59,6 +64,8 @@ const items = [
     circleId: circles[0].id,
     userId: event.userId,
     name: "価格未定グッズ",
+    imagePath: null,
+    imageUrl: null,
     price: null,
     quantity: 3,
     memo: null,
@@ -91,6 +98,10 @@ test("snapshotをserializeして同じユーザーとEventで復元できる", (
     "password",
     "publishable_key",
     "service_role",
+    "signed-circle-image",
+    "signed-item-image",
+    "imagePath",
+    "imageUrl",
   ]) {
     assert.equal(serialized.includes(forbiddenField), false);
   }

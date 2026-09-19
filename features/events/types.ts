@@ -21,7 +21,8 @@ export type EventFormValues = {
   name: string;
   eventDate: string;
   plannedBudget: string;
-  venue: string;
+  venuePreset: string;
+  venueCustom: string;
   memo: string;
 };
 

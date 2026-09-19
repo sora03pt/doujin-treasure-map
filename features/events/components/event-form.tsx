@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState, useEffect, useId, useRef } from "react";
+import { useActionState, useEffect, useId, useRef, useState } from "react";
 
 import type {
   EventFormState,
   EventFormValues,
 } from "@/features/events/types";
 import { useConnectivity } from "@/features/offline/components/connectivity-provider";
+import { VENUE_PRESETS } from "@/features/events/venue";
 
 type EventFormAction = (
   state: EventFormState,
@@ -35,6 +36,7 @@ export function EventForm({
     values: initialValues,
   });
   const errorSummaryRef = useRef<HTMLParagraphElement>(null);
+  const [venuePreset, setVenuePreset] = useState(initialValues.venuePreset);
   const { isOnline } = useConnectivity();
   const controlsDisabled = isPending || !isOnline;
 
@@ -169,29 +171,59 @@ export function EventForm({
       <div className="space-y-2">
         <label
           className="block text-sm font-semibold"
-          htmlFor={fieldId("venue")}
+          htmlFor={fieldId("venue-preset")}
         >
           会場 <span className="font-normal text-slate-500">（任意）</span>
         </label>
-        <input
+        <select
           aria-describedby={
-            state.fieldErrors.venue ? errorId("venue") : undefined
+            state.fieldErrors.venuePreset ? errorId("venue-preset") : undefined
           }
-          aria-invalid={Boolean(state.fieldErrors.venue)}
+          aria-invalid={Boolean(state.fieldErrors.venuePreset)}
           className={inputClassName}
-          defaultValue={state.values.venue}
           disabled={controlsDisabled}
-          id={fieldId("venue")}
-          maxLength={200}
-          name="venue"
-          type="text"
-        />
-        {state.fieldErrors.venue ? (
-          <p className="text-sm text-red-700" id={errorId("venue")}>
-            {state.fieldErrors.venue}
+          id={fieldId("venue-preset")}
+          name="venue_preset"
+          onChange={(event) => setVenuePreset(event.currentTarget.value)}
+          value={venuePreset}
+        >
+          {VENUE_PRESETS.map((venue) => (
+            <option key={venue} value={venue}>{venue}</option>
+          ))}
+          <option value="other">その他</option>
+        </select>
+        {state.fieldErrors.venuePreset ? (
+          <p className="text-sm text-red-700" id={errorId("venue-preset")}>
+            {state.fieldErrors.venuePreset}
           </p>
         ) : null}
       </div>
+
+      {venuePreset === "other" ? (
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold" htmlFor={fieldId("venue-custom")}>
+            会場名 <span className="font-normal text-slate-500">（任意）</span>
+          </label>
+          <input
+            aria-describedby={state.fieldErrors.venueCustom ? errorId("venue-custom") : undefined}
+            aria-invalid={Boolean(state.fieldErrors.venueCustom)}
+            className={inputClassName}
+            defaultValue={state.values.venueCustom}
+            disabled={controlsDisabled}
+            id={fieldId("venue-custom")}
+            maxLength={200}
+            name="venue_custom"
+            type="text"
+          />
+          {state.fieldErrors.venueCustom ? (
+            <p className="text-sm text-red-700" id={errorId("venue-custom")}>
+              {state.fieldErrors.venueCustom}
+            </p>
+          ) : null}
+        </div>
+      ) : (
+        <input name="venue_custom" type="hidden" value="" />
+      )}
 
       <div className="space-y-2">
         <label

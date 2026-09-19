@@ -4,6 +4,12 @@ import type {
   Circle,
   ValidatedCircleInput,
 } from "@/features/circles/types";
+import {
+  circleImagePath,
+  createSignedImageUrlMap,
+  removeReferenceImages,
+  uploadReferenceImage,
+} from "@/features/images/storage";
 import { createClient } from "@/lib/supabase/server";
 
 async function getAuthenticatedContext() {
@@ -44,6 +50,8 @@ function toCircle(row: {
   event_id: string;
   user_id: string;
   name: string;
+  image_path: string | null;
+  distribution_post_url: string | null;
   space_number: string | null;
   x_url: string | null;
   web_url: string | null;
@@ -53,12 +61,15 @@ function toCircle(row: {
   visit_status: "unvisited" | "purchased" | "sold_out" | "skipped";
   created_at: string;
   updated_at: string;
-}): Circle {
+}, imageUrl: string | null = null): Circle {
   return {
     id: row.id,
     eventId: row.event_id,
     userId: row.user_id,
     name: row.name,
+    imagePath: row.image_path,
+    imageUrl,
+    distributionPostUrl: row.distribution_post_url,
     spaceNumber: row.space_number,
     xUrl: row.x_url,
     webUrl: row.web_url,
@@ -79,6 +90,7 @@ function toDatabaseInput(input: ValidatedCircleInput) {
     visit_status: input.visitStatus,
     memo: input.memo,
     assignee: input.assignee,
+    distribution_post_url: input.distributionPostUrl,
   };
 }
 
@@ -127,7 +139,7 @@ export async function listCirclesForCurrentUser(eventId: string) {
   const { data, error } = await context.supabase
     .from("circles")
     .select(
-      "id,event_id,user_id,name,space_number,x_url,web_url,memo,priority,assignee,visit_status,created_at,updated_at",
+      "id,event_id,user_id,name,image_path,distribution_post_url,space_number,x_url,web_url,memo,priority,assignee,visit_status,created_at,updated_at",
     )
     .eq("event_id", eventId)
     .eq("user_id", context.userId)
@@ -138,9 +150,16 @@ export async function listCirclesForCurrentUser(eventId: string) {
     return { status: "error" as const, circles: [] };
   }
 
+  const imageUrls = await createSignedImageUrlMap(
+    context.supabase,
+    (data ?? []).map((row) => row.image_path),
+  );
+
   return {
     status: "success" as const,
-    circles: (data ?? []).map(toCircle),
+    circles: (data ?? []).map((row) =>
+      toCircle(row, row.image_path ? imageUrls.get(row.image_path) ?? null : null),
+    ),
   };
 }
 
@@ -268,6 +287,37 @@ export async function deleteCircleForCurrentUser(
     return ownership;
   }
 
+  const { data: circle, error: circleError } = await context.supabase
+    .from("circles")
+    .select("id,image_path,items(image_path)")
+    .eq("id", circleId)
+    .eq("event_id", eventId)
+    .eq("user_id", context.userId)
+    .maybeSingle();
+
+  if (circleError) {
+    console.error("Failed to load circle images before deletion", {
+      code: circleError.code,
+    });
+    return { status: "error" as const };
+  }
+
+  if (!circle) {
+    return { status: "not_found" as const };
+  }
+
+  const imageRemoval = await removeReferenceImages(context.supabase, [
+    circle.image_path,
+    ...(circle.items ?? []).map((item) => item.image_path),
+  ]);
+
+  if (imageRemoval.status === "error") {
+    console.error("Failed to remove circle reference images", {
+      code: imageRemoval.code,
+    });
+    return { status: "error" as const };
+  }
+
   const { data, error } = await context.supabase
     .from("circles")
     .delete()
@@ -285,4 +335,123 @@ export async function deleteCircleForCurrentUser(
   return data
     ? { status: "success" as const }
     : { status: "not_found" as const };
+}
+
+export async function uploadCircleImageForCurrentUser(
+  eventId: string,
+  circleId: string,
+  file: File,
+) {
+  const context = await getAuthenticatedContext();
+
+  if (!context) {
+    return { status: "unauthenticated" as const };
+  }
+
+  const ownership = await findOwnedCircle(context, eventId, circleId);
+
+  if (ownership.status !== "owned") {
+    return ownership;
+  }
+
+  const { data: circle, error: loadError } = await context.supabase
+    .from("circles")
+    .select("image_path")
+    .eq("id", circleId)
+    .eq("event_id", eventId)
+    .eq("user_id", context.userId)
+    .maybeSingle();
+
+  if (loadError || !circle) {
+    return { status: loadError ? "error" as const : "not_found" as const };
+  }
+
+  const path = circleImagePath(context.userId, circleId);
+  const upload = await uploadReferenceImage(context.supabase, path, file);
+
+  if (upload.status === "error") {
+    console.error("Failed to upload circle reference image", {
+      code: upload.code,
+    });
+    return { status: "error" as const };
+  }
+
+  if (circle.image_path === path) {
+    return { status: "success" as const };
+  }
+
+  const { data, error } = await context.supabase
+    .from("circles")
+    .update({ image_path: path })
+    .eq("id", circleId)
+    .eq("event_id", eventId)
+    .eq("user_id", context.userId)
+    .select("id")
+    .maybeSingle();
+
+  if (error || !data) {
+    await removeReferenceImages(context.supabase, [path]);
+    console.error("Failed to save circle reference image path", {
+      code: error?.code ?? null,
+    });
+    return { status: error ? "error" as const : "not_found" as const };
+  }
+
+  return { status: "success" as const };
+}
+
+export async function deleteCircleImageForCurrentUser(
+  eventId: string,
+  circleId: string,
+) {
+  const context = await getAuthenticatedContext();
+
+  if (!context) {
+    return { status: "unauthenticated" as const };
+  }
+
+  const ownership = await findOwnedCircle(context, eventId, circleId);
+
+  if (ownership.status !== "owned") {
+    return ownership;
+  }
+
+  const { data: circle, error: loadError } = await context.supabase
+    .from("circles")
+    .select("image_path")
+    .eq("id", circleId)
+    .eq("event_id", eventId)
+    .eq("user_id", context.userId)
+    .maybeSingle();
+
+  if (loadError || !circle) {
+    return { status: loadError ? "error" as const : "not_found" as const };
+  }
+
+  const removal = await removeReferenceImages(context.supabase, [circle.image_path]);
+
+  if (removal.status === "error") {
+    console.error("Failed to delete circle reference image", {
+      code: removal.code,
+    });
+    return { status: "error" as const };
+  }
+
+  const { data, error } = await context.supabase
+    .from("circles")
+    .update({ image_path: null })
+    .eq("id", circleId)
+    .eq("event_id", eventId)
+    .eq("user_id", context.userId)
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    console.error("Failed to clear circle reference image path", {
+      code: error.code,
+    });
+    return { status: "error" as const };
+  }
+
+  return data ? { status: "success" as const } : { status: "not_found" as const };
 }

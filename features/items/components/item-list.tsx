@@ -1,5 +1,13 @@
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
-import { createItem, deleteItem, updateItem } from "@/features/items/actions";
+import { ImagePreviewDialog } from "@/components/ui/image-preview-dialog";
+import { ReferenceImageManager } from "@/features/images/components/reference-image-manager";
+import {
+  createItem,
+  deleteItem,
+  deleteItemImage,
+  updateItem,
+  uploadItemImage,
+} from "@/features/items/actions";
 import {
   emptyItemFormValues,
   ItemForm,
@@ -47,6 +55,18 @@ export function ItemList({ eventId, circleId, items }: ItemListProps) {
               circleId,
               item.id,
             );
+            const uploadItemImageWithIds = uploadItemImage.bind(
+              null,
+              eventId,
+              circleId,
+              item.id,
+            );
+            const deleteItemImageWithIds = deleteItemImage.bind(
+              null,
+              eventId,
+              circleId,
+              item.id,
+            );
 
             return (
               <li className="py-3" id={`item-${item.id}`} key={item.id}>
@@ -66,6 +86,13 @@ export function ItemList({ eventId, circleId, items }: ItemListProps) {
                       </p>
                     ) : null}
                   </div>
+                  {item.imageUrl ? (
+                    <ImagePreviewDialog
+                      alt={`${item.name}の参照画像`}
+                      src={item.imageUrl}
+                      thumbnailClassName="h-14 w-14"
+                    />
+                  ) : null}
                 </div>
 
                 <div className="mt-2 flex flex-wrap items-center gap-1">
@@ -83,6 +110,12 @@ export function ItemList({ eventId, circleId, items }: ItemListProps) {
                           memo: item.memo ?? "",
                         }}
                         submitLabel="頒布物を更新"
+                      />
+                      <ReferenceImageManager
+                        alt={`${item.name}の参照画像`}
+                        deleteAction={deleteItemImageWithIds}
+                        imageUrl={item.imageUrl}
+                        uploadAction={uploadItemImageWithIds}
                       />
                     </div>
                   </details>

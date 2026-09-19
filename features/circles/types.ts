@@ -11,6 +11,9 @@ export type Circle = {
   eventId: EventId;
   userId: string;
   name: string;
+  imagePath: string | null;
+  imageUrl: string | null;
+  distributionPostUrl: string | null;
   spaceNumber: string | null;
   xUrl: string | null;
   webUrl: string | null;
@@ -29,6 +32,7 @@ export type CircleFormValues = {
   visitStatus: VisitStatus;
   memo: string;
   assignee: string;
+  distributionPostUrl: string;
 };
 
 export type CircleFieldErrors = Partial<
@@ -60,4 +64,10 @@ export type ValidatedCircleInput = {
   visitStatus: VisitStatus;
   memo: string | null;
   assignee: string | null;
+  distributionPostUrl: string | null;
+};
+
+export type ReferenceImageActionState = {
+  status: "idle" | "success" | "error";
+  message: string;
 };

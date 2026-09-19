@@ -51,6 +51,8 @@ export type Database = {
           event_id: string;
           user_id: string;
           name: string;
+          image_path: string | null;
+          distribution_post_url: string | null;
           space_number: string | null;
           x_url: string | null;
           web_url: string | null;
@@ -66,6 +68,8 @@ export type Database = {
           event_id: string;
           user_id: string;
           name: string;
+          image_path?: string | null;
+          distribution_post_url?: string | null;
           space_number?: string | null;
           x_url?: string | null;
           web_url?: string | null;
@@ -81,6 +85,8 @@ export type Database = {
           event_id?: string;
           user_id?: string;
           name?: string;
+          image_path?: string | null;
+          distribution_post_url?: string | null;
           space_number?: string | null;
           x_url?: string | null;
           web_url?: string | null;
@@ -107,6 +113,7 @@ export type Database = {
           circle_id: string;
           user_id: string;
           name: string;
+          image_path: string | null;
           price: number | null;
           quantity: number;
           memo: string | null;
@@ -119,6 +126,7 @@ export type Database = {
           circle_id: string;
           user_id: string;
           name: string;
+          image_path?: string | null;
           price?: number | null;
           quantity?: number;
           memo?: string | null;
@@ -131,6 +139,7 @@ export type Database = {
           circle_id?: string;
           user_id?: string;
           name?: string;
+          image_path?: string | null;
           price?: number | null;
           quantity?: number;
           memo?: string | null;
