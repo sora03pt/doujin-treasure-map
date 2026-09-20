@@ -1,5 +1,7 @@
 import type { Locator } from "@playwright/test";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
+import type { Database } from "@/lib/supabase/database.types";
 import { expectNoSeriousAccessibilityViolations } from "./accessibility";
 import { expect, test } from "./fixtures";
 
@@ -15,12 +17,29 @@ async function uploadImage(region: Locator, imageBuffer: Buffer) {
     mimeType: "image/png",
     buffer: imageBuffer,
   });
-  const button = region.getByRole("button", {
-    name: /画像を(保存|差し替える)/,
-  });
+  const button = region
+    .getByRole("button")
+    .filter({ hasText: /画像を(保存|差し替える)/ });
   await expect(button).toBeEnabled();
   await button.click();
   await expect(region.getByText("画像を保存しました。", { exact: true })).toBeVisible();
+}
+
+async function storageObjectExists(
+  client: SupabaseClient<Database>,
+  path: string,
+) {
+  const parts = path.split("/");
+  const name = parts.pop();
+  const { data, error } = await client.storage
+    .from("reference-images")
+    .list(parts.join("/"), { limit: 100 });
+
+  if (error) {
+    throw new Error(`Storage list failed with ${error.name}.`);
+  }
+
+  return (data ?? []).some((entry) => entry.id && entry.name === name);
 }
 
 test("会場、X投稿URL、Circle・Item画像を登録・差し替え・削除できる", async ({
@@ -50,17 +69,29 @@ test("会場、X投稿URL、Circle・Item画像を登録・差し替え・削除
 
   const eventDetails = page.locator("details").filter({ hasText: "イベント情報を編集" });
   await ensureDetailsOpen(eventDetails);
-  await eventDetails.getByLabel(/^会場/).selectOption("東京ビッグサイト");
+  await eventDetails
+    .getByRole("combobox", { name: /^会場/ })
+    .selectOption("東京ビッグサイト");
   await eventDetails.getByRole("button", { name: "変更を保存" }).click();
   await expect(page).toHaveURL(/\/events\?notice=updated$/);
 
-  await page.getByText(event.name, { exact: true }).click();
+  await page
+    .locator("li")
+    .filter({ hasText: event.name })
+    .getByRole("link")
+    .click();
   await expect(page.getByText("東京ビッグサイト", { exact: true })).toBeVisible();
   await ensureDetailsOpen(eventDetails);
-  await eventDetails.getByLabel(/^会場/).selectOption("other");
+  await eventDetails
+    .getByRole("combobox", { name: /^会場/ })
+    .selectOption("other");
   await eventDetails.getByLabel(/会場名/).fill("E2E展示ホール");
   await eventDetails.getByRole("button", { name: "変更を保存" }).click();
-  await page.getByText(event.name, { exact: true }).click();
+  await page
+    .locator("li")
+    .filter({ hasText: event.name })
+    .getByRole("link")
+    .click();
   await expect(page.getByText("E2E展示ホール", { exact: true })).toBeVisible();
 
   const addCircle = page.locator("details").filter({ hasText: "サークルを追加" });
@@ -86,7 +117,7 @@ test("会場、X投稿URL、Circle・Item画像を登録・差し替え・削除
   circleCard = page.locator("li").filter({ hasText: circleName });
   const circleImageButton = circleCard.getByRole("button", {
     name: `${circleName}の参照画像を拡大表示`,
-  });
+  }).first();
   await expect(circleImageButton).toBeVisible();
   await circleImageButton.click();
   await expect(page.getByRole("dialog", { name: `${circleName}の参照画像` })).toBeVisible();
@@ -114,6 +145,9 @@ test("会場、X投稿URL、Circle・Item画像を登録・差し替え・削除
   await ensureDetailsOpen(addItem);
   await addItem.getByLabel(/頒布物名/).fill(itemName);
   await addItem.getByRole("button", { name: "頒布物を保存" }).click();
+  await expect(
+    page.getByText("頒布物を追加しました。", { exact: true }),
+  ).toBeVisible();
 
   circleCard = page.locator("li").filter({ hasText: circleName });
   management = circleCard.locator("details").filter({ hasText: "編集・頒布物管理" });
@@ -129,7 +163,9 @@ test("会場、X投稿URL、Circle・Item画像を登録・差し替え・削除
   await ensureDetailsOpen(management);
   itemRow = management.locator("li").filter({ hasText: itemName });
   await expect(
-    itemRow.getByRole("button", { name: `${itemName}の参照画像を拡大表示` }),
+    itemRow
+      .getByRole("button", { name: `${itemName}の参照画像を拡大表示` })
+      .first(),
   ).toBeVisible();
   await ensureDetailsOpen(itemRow.locator("details").filter({ hasText: "頒布物を編集" }));
   itemImageRegion = itemRow.getByRole("region", { name: "参照画像" });
@@ -149,4 +185,117 @@ test("会場、X投稿URL、Circle・Item画像を登録・差し替え・削除
   ]);
   expect(circleAfterDelete.data?.image_path).toBeNull();
   expect(itemAfterDelete.data?.image_path).toBeNull();
+});
+
+test("Item・Circle削除時に関連画像をStorageから削除する", async ({
+  e2ePrefix,
+  loginAsTestUser,
+  normalUserClient,
+  page,
+  seedEvent,
+}) => {
+  const event = await seedEvent();
+  const circleName = `${e2ePrefix}Cleanup Circle`;
+  const deletedItemName = `${e2ePrefix}Deleted Item`;
+  const cascadedItemName = `${e2ePrefix}Cascaded Item`;
+  const {
+    data: { user },
+  } = await normalUserClient.auth.getUser();
+
+  expect(user).not.toBeNull();
+
+  const { data: circle, error: circleError } = await normalUserClient
+    .from("circles")
+    .insert({ event_id: event.id, name: circleName, user_id: user!.id })
+    .select("id")
+    .single();
+  expect(circleError).toBeNull();
+
+  const { data: items, error: itemsError } = await normalUserClient
+    .from("items")
+    .insert([
+      { circle_id: circle!.id, name: deletedItemName, user_id: user!.id },
+      { circle_id: circle!.id, name: cascadedItemName, user_id: user!.id },
+    ])
+    .select("id,name");
+  expect(itemsError).toBeNull();
+
+  const deletedItem = items!.find((item) => item.name === deletedItemName)!;
+  const cascadedItem = items!.find((item) => item.name === cascadedItemName)!;
+  const circlePath = `${user!.id}/circles/${circle!.id}/reference`;
+  const deletedItemPath = `${user!.id}/items/${deletedItem.id}/reference`;
+  const cascadedItemPath = `${user!.id}/items/${cascadedItem.id}/reference`;
+  const imageBuffer = Buffer.from([
+    137, 80, 78, 71, 13, 10, 26, 10,
+  ]);
+  const bucket = normalUserClient.storage.from("reference-images");
+
+  for (const path of [circlePath, deletedItemPath, cascadedItemPath]) {
+    const { error } = await bucket.upload(path, imageBuffer, {
+      cacheControl: "0",
+      contentType: "image/png",
+      upsert: false,
+    });
+    expect(error).toBeNull();
+  }
+
+  const [circleImageUpdate, deletedItemImageUpdate, cascadedItemImageUpdate] =
+    await Promise.all([
+      normalUserClient
+        .from("circles")
+        .update({ image_path: circlePath })
+        .eq("id", circle!.id),
+      normalUserClient
+        .from("items")
+        .update({ image_path: deletedItemPath })
+        .eq("id", deletedItem.id),
+      normalUserClient
+        .from("items")
+        .update({ image_path: cascadedItemPath })
+        .eq("id", cascadedItem.id),
+    ]);
+  expect(circleImageUpdate.error).toBeNull();
+  expect(deletedItemImageUpdate.error).toBeNull();
+  expect(cascadedItemImageUpdate.error).toBeNull();
+
+  await loginAsTestUser();
+  await page.goto(`/events/${event.id}`);
+
+  let circleCard = page.locator("li").filter({ hasText: circleName });
+  let management = circleCard
+    .locator("details")
+    .filter({ hasText: "編集・頒布物管理" });
+  await ensureDetailsOpen(management);
+  const deletedItemRow = management
+    .locator("li")
+    .filter({ hasText: deletedItemName });
+  await deletedItemRow.getByRole("button", { name: "頒布物を削除" }).click();
+  await page
+    .getByRole("dialog", { name: "頒布物を削除しますか？" })
+    .getByRole("button", { name: "削除する" })
+    .click();
+  await expect(
+    page.getByText("頒布物を削除しました。", { exact: true }),
+  ).toBeVisible();
+  expect(await storageObjectExists(normalUserClient, deletedItemPath)).toBe(
+    false,
+  );
+
+  circleCard = page.locator("li").filter({ hasText: circleName });
+  management = circleCard
+    .locator("details")
+    .filter({ hasText: "編集・頒布物管理" });
+  await ensureDetailsOpen(management);
+  await management.getByRole("button", { name: "サークルを削除" }).click();
+  await page
+    .getByRole("dialog", { name: "サークルを削除しますか？" })
+    .getByRole("button", { name: "削除する" })
+    .click();
+  await expect(
+    page.getByText("サークルを削除しました。", { exact: true }),
+  ).toBeVisible();
+  expect(await storageObjectExists(normalUserClient, circlePath)).toBe(false);
+  expect(await storageObjectExists(normalUserClient, cascadedItemPath)).toBe(
+    false,
+  );
 });

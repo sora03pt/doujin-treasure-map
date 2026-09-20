@@ -33,4 +33,4 @@ Items have explicit policies for select, insert, update, and delete. Each policy
 {user_id}/items/{item_id}/reference
 ```
 
-select / insert / update / deleteの各Storage Policyで、先頭pathが`auth.uid()`と一致することに加え、path中のCircleまたはItemが同じユーザーの所有データであることを確認する。アプリ側も`auth.getUser()`と親ownershipを確認し、Service Role Keyは通常操作に使用しない。
+insert / updateでは先頭pathを`auth.uid()`へ固定し、`owns_reference_image_parent`でpath中のCircleまたはItemが同じユーザーの所有データであることを確認する。select / deleteではStorageが付与した`owner_id`と先頭pathの両方を確認する。これにより他ユーザーの参照と削除を拒否しつつ、親データが先に消えた孤児画像も所有者本人がcleanupできる。アプリ側も`auth.getUser()`と親ownershipを確認し、Service Role Keyは通常操作に使用しない。
