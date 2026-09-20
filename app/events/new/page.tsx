@@ -31,7 +31,8 @@ export default function NewEventPage() {
               name: "",
               eventDate: "",
               plannedBudget: "",
-              venue: "",
+              venuePreset: "東京ビッグサイト",
+              venueCustom: "",
               memo: "",
             }}
             submitLabel="イベントを作成"

@@ -6,6 +6,7 @@ import type {
   EventSummary,
   ValidatedEventInput,
 } from "@/features/events/types";
+import { removeReferenceImages } from "@/features/images/storage";
 
 async function getAuthenticatedContext() {
   const supabase = await createClient();
@@ -181,6 +182,40 @@ export async function deleteEventForCurrentUser(eventId: string) {
 
   if (!context) {
     return { status: "unauthenticated" as const };
+  }
+
+  const { data: event, error: loadError } = await context.supabase
+    .from("events")
+    .select("id,circles(image_path,items(image_path))")
+    .eq("id", eventId)
+    .eq("user_id", context.userId)
+    .maybeSingle();
+
+  if (loadError) {
+    console.error("Failed to load event images before deletion", {
+      code: loadError.code,
+    });
+    return { status: "error" as const };
+  }
+
+  if (!event) {
+    return { status: "not_found" as const };
+  }
+
+  const imagePaths = event.circles.flatMap((circle) => [
+    circle.image_path,
+    ...circle.items.map((item) => item.image_path),
+  ]);
+  const imageRemoval = await removeReferenceImages(
+    context.supabase,
+    imagePaths,
+  );
+
+  if (imageRemoval.status === "error") {
+    console.error("Failed to remove event reference images", {
+      code: imageRemoval.code,
+    });
+    return { status: "error" as const };
   }
 
   const { data, error } = await context.supabase

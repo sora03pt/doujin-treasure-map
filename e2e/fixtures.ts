@@ -42,6 +42,32 @@ async function cleanupEvents(
   client: SupabaseClient<Database>,
   prefix: string,
 ) {
+  const { data: events, error: loadError } = await client
+    .from("events")
+    .select("id,circles(image_path,items(image_path))")
+    .like("name", `${prefix}%`);
+
+  if (loadError) {
+    throw new Error(`E2E cleanup load failed with code ${loadError.code}.`);
+  }
+
+  const imagePaths = (events ?? []).flatMap((event) =>
+    event.circles.flatMap((circle) => [
+      circle.image_path,
+      ...circle.items.map((item) => item.image_path),
+    ]),
+  ).filter((path): path is string => Boolean(path));
+
+  if (imagePaths.length > 0) {
+    const { error: storageError } = await client.storage
+      .from("reference-images")
+      .remove(imagePaths);
+
+    if (storageError) {
+      throw new Error(`E2E Storage cleanup failed with ${storageError.name}.`);
+    }
+  }
+
   const { error } = await client
     .from("events")
     .delete()

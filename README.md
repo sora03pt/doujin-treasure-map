@@ -6,7 +6,7 @@
 
 ## 現在の状況
 
-Phase 7までのMVP機能を実装済みです。認証、Event・Circle・ItemのCRUD、イベント当日画面、予算サマリー、自動Quality Gate、読み取り専用のオフラインスナップショットに対応しています。
+Phase 7までのMVP機能に加え、Circle・Itemの参照画像、Xの頒布情報リンク、代表会場の選択に対応しています。認証、Event・Circle・ItemのCRUD、イベント当日画面、予算サマリー、自動Quality Gate、読み取り専用のオフラインスナップショットも利用できます。
 
 ## 技術スタック
 
@@ -52,6 +52,8 @@ SupabaseはCookieベースのSSRヘルパーと、ブラウザで安全に利用
 - 優先度: 最優先 / 行きたい / 時間があれば
 - 担当者
 - 訪問状態: 未訪問 / 購入済み / 売り切れ / スキップ
+- サークルカット・お品書き等の参照画像（1枚）
+- Xの頒布情報投稿URL
 
 ### 頒布物（Item）
 
@@ -60,6 +62,7 @@ SupabaseはCookieベースのSSRヘルパーと、ブラウザで安全に利用
 - 数量
 - メモ
 - 購入済み状態
+- 表紙・商品等の参照画像（1枚）
 
 ### 予算（Budget）
 
@@ -128,6 +131,8 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=...
 npx supabase db push
 ```
 
+参照画像用migrationはprivateな`reference-images` bucketとStorage Policyも作成します。画像は`{user_id}/circles/{circle_id}/reference`または`{user_id}/items/{item_id}/reference`へ保存し、通常ユーザーのsessionで署名URLを発行します。Service Role Keyは使用しません。
+
 Supabase AuthでEmail/Password認証を有効にし、次のローカルRedirect URLを追加します。
 
 ```text
@@ -154,9 +159,9 @@ npm run build
 
 本番ビルドではNext.jsのbuild後にSerwist Configurator modeを実行し、`public/sw.js`を生成します。生成ファイルはGitの管理対象外であり、CIとデプロイ時に再生成します。
 
-Service Workerは、公開オフラインフォールバック、manifest、icon、build assetをプリキャッシュします。ランタイムキャッシュの対象は`/_next/static/`と`/icons/`だけです。Navigation、RSC、API、Supabase、ユーザー画像、認証レスポンスはネットワークを使用し、ランタイムキャッシュへ保存しません。
+Service Workerは、公開オフラインフォールバック、manifest、icon、build assetをプリキャッシュします。ランタイムキャッシュの対象は`/_next/static/`と`/icons/`だけです。Navigation、RSC、API、Supabase、Storage上の参照画像、認証レスポンスはネットワークを使用し、ランタイムキャッシュへ保存しません。
 
-オンライン中にEventを開くと、イベント当日画面に必要な最小限の読み取り専用スナップショットをIndexedDBへ保存します。スナップショットにはEvent・Circle・Itemの表示データと、計算済みの予算・進捗サマリーを含めます。資格情報、トークン、Cookie、Supabaseレスポンスは保存しません。
+オンライン中にEventを開くと、イベント当日画面に必要な最小限の読み取り専用スナップショットをIndexedDBへ保存します。スナップショットにはEvent・Circle・Itemのテキスト表示データと、計算済みの予算・進捗サマリーを含めます。画像本体、署名URL、資格情報、トークン、Cookie、Supabaseレスポンスは保存しません。
 
 保存領域は`userId + eventId`で分離し、ユーザーごとに直近5Event、保存期間30日を上限とします。ログアウト時はserver logout actionの実行前にローカルスナップショットをすべて削除します。未認証のログイン画面でも、認証操作を有効にする前にローカルスナップショットを削除し、session期限切れやユーザー切り替え後のデータ持ち越しを防ぎます。
 

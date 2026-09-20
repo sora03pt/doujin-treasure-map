@@ -17,7 +17,8 @@
     "test:e2e:pwa": "npm run build && playwright test --config=playwright.pwa.config.ts",
     "test:event-day": "node --test --experimental-strip-types features/circles/event-day.test.mjs",
     "test:offline": "node --test --experimental-strip-types features/offline/snapshot.test.mjs features/offline/storage.test.mjs",
-    "test:unit": "npm run test:budget && npm run test:event-day && npm run test:offline",
+    "test:reference": "node --test --experimental-strip-types features/circles/reference.test.mjs features/events/venue.test.mjs features/images/validation.test.mjs",
+    "test:unit": "npm run test:budget && npm run test:event-day && npm run test:offline && npm run test:reference",
     "typecheck": "tsc --noEmit --incremental false"
   },
   "dependencies": {

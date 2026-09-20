@@ -29,6 +29,7 @@ export const emptyCircleFormValues: CircleFormValues = {
   visitStatus: "unvisited",
   memo: "",
   assignee: "",
+  distributionPostUrl: "",
 };
 
 export function CircleForm({
@@ -172,6 +173,28 @@ export function CircleForm({
           type="text"
         />
         {state.fieldErrors.assignee ? <p className="text-sm text-red-700" id={errorId("assignee")}>{state.fieldErrors.assignee}</p> : null}
+      </div>
+
+      <div className="space-y-2">
+        <label className="block text-sm font-semibold" htmlFor={fieldId("distribution-post-url")}>
+          Xの頒布情報URL <span className="font-normal text-slate-500">（任意）</span>
+        </label>
+        <input
+          aria-describedby={state.fieldErrors.distributionPostUrl ? errorId("distribution-post-url") : `${fieldId("distribution-post-url")}-help`}
+          aria-invalid={Boolean(state.fieldErrors.distributionPostUrl)}
+          className={inputClassName}
+          defaultValue={state.values.distributionPostUrl}
+          disabled={controlsDisabled}
+          id={fieldId("distribution-post-url")}
+          maxLength={500}
+          name="distribution_post_url"
+          placeholder="https://x.com/username/status/123456789"
+          type="url"
+        />
+        <p className="text-xs leading-5 text-slate-500 dark:text-slate-400" id={`${fieldId("distribution-post-url")}-help`}>
+          x.comまたはtwitter.comの投稿URLを登録できます。
+        </p>
+        {state.fieldErrors.distributionPostUrl ? <p className="text-sm text-red-700" id={errorId("distribution-post-url")}>{state.fieldErrors.distributionPostUrl}</p> : null}
       </div>
 
       <div className="space-y-2">

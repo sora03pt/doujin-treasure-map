@@ -32,6 +32,8 @@ Owned by one user and belongs to one event.
 - `event_id uuid not null references events(id) on delete cascade`
 - `user_id uuid not null references auth.users(id) on delete cascade`
 - `name text not null`
+- `image_path text`
+- `distribution_post_url text`
 - `space_number text not null`
 - `x_url text`
 - `web_url text`
@@ -49,6 +51,7 @@ Owned by one user and belongs to one circle.
 - `circle_id uuid not null references circles(id) on delete cascade`
 - `user_id uuid not null references auth.users(id) on delete cascade`
 - `name text not null`
+- `image_path text`
 - `price integer not null default 0`
 - `quantity integer not null default 1`
 - `memo text`
@@ -77,9 +80,14 @@ This keeps the initial schema easy to evolve while still rejecting invalid state
 - `items (user_id)`
 - `items (user_id, purchased)`
 
-## Deferred Columns
+## Reference Image Storage
 
-`planned_budget` is deferred until Phase 5 Budget. The first budget UI can be added with a focused migration when the budget workflow starts.
+CircleとItemの画像本体はDBへ保存せず、privateなSupabase Storage bucket `reference-images`へ保存する。DBの`image_path`は所有者を先頭にしたStorage pathだけを保持し、画面表示時に短時間のsigned URLを発行する。
+
+```text
+{user_id}/circles/{circle_id}/reference
+{user_id}/items/{item_id}/reference
+```
 
 ## Future Tables
 
@@ -87,6 +95,5 @@ Add these only when their feature phase starts:
 
 - `map_assets`: user-uploaded map images/PDF references
 - `map_pins`: normalized pin coordinates linked to circles
-- `circle_assets`: oshinagaki or reference images
 - `shared_event_members`: friend sharing and assignment
 - `plans` or billing tables: only after monetization is designed

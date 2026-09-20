@@ -3,6 +3,7 @@ import type {
   EventFormValues,
   ValidatedEventInput,
 } from "@/features/events/types";
+import { resolveVenue } from "@/features/events/venue";
 
 const EVENT_ID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -67,13 +68,15 @@ export function validateEventForm(formData: FormData): EventValidationResult {
     name: readText(formData, "name"),
     eventDate: readText(formData, "event_date"),
     plannedBudget: readText(formData, "planned_budget"),
-    venue: readText(formData, "venue"),
+    venuePreset: readText(formData, "venue_preset"),
+    venueCustom: readText(formData, "venue_custom"),
     memo: readText(formData, "memo"),
   };
   const fieldErrors: EventFieldErrors = {};
   const plannedBudget = values.plannedBudget
     ? parseInteger(values.plannedBudget)
     : null;
+  const venue = resolveVenue(values.venuePreset, values.venueCustom);
 
   if (!values.name) {
     fieldErrors.name = "イベント名を入力してください。";
@@ -96,8 +99,10 @@ export function validateEventForm(formData: FormData): EventValidationResult {
     fieldErrors.plannedBudget = "予定予算は0以上の整数で入力してください。";
   }
 
-  if (values.venue.length > VENUE_MAX_LENGTH) {
-    fieldErrors.venue = `会場は${VENUE_MAX_LENGTH}文字以内で入力してください。`;
+  if (venue === null) {
+    fieldErrors.venuePreset = "会場を選択してください。";
+  } else if (values.venueCustom.length > VENUE_MAX_LENGTH) {
+    fieldErrors.venueCustom = `会場は${VENUE_MAX_LENGTH}文字以内で入力してください。`;
   }
 
   if (values.memo.length > MEMO_MAX_LENGTH) {
@@ -114,7 +119,7 @@ export function validateEventForm(formData: FormData): EventValidationResult {
       name: values.name,
       eventDate: values.eventDate,
       plannedBudget,
-      venue: values.venue || null,
+      venue: venue || null,
       memo: values.memo || null,
     },
     values,

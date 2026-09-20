@@ -24,13 +24,13 @@ Items have explicit policies for select, insert, update, and delete. Each policy
 - the parent circle exists
 - the parent circle is owned by `auth.uid()`
 
-## Storage Policy For Later
+## Storage Policy
 
-When image upload starts, store files under owner-scoped paths such as:
+`reference-images` bucketはprivateとし、所有者を先頭にした固定pathを使う。
 
 ```text
-event-assets/{user_id}/{event_id}/{file_id}
-circle-assets/{user_id}/{circle_id}/{file_id}
+{user_id}/circles/{circle_id}/reference
+{user_id}/items/{item_id}/reference
 ```
 
-Storage RLS should allow access only when the first path segment matches `auth.uid()` or when an explicit sharing table allows it.
+insert / updateでは先頭pathを`auth.uid()`へ固定し、`owns_reference_image_parent`でpath中のCircleまたはItemが同じユーザーの所有データであることを確認する。select / deleteではStorageが付与した`owner_id`と先頭pathの両方を確認する。これにより他ユーザーの参照と削除を拒否しつつ、親データが先に消えた孤児画像も所有者本人がcleanupできる。アプリ側も`auth.getUser()`と親ownershipを確認し、Service Role Keyは通常操作に使用しない。
