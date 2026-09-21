@@ -25,6 +25,7 @@ import { ReferenceImageManager } from "@/features/images/components/reference-im
 
 type EventDayCircleCardProps = {
   eventId: string;
+  eventHalls: string[];
   circle: Circle;
   items: Item[];
 };
@@ -55,6 +56,7 @@ const yenFormatter = new Intl.NumberFormat("ja-JP", {
 
 export function EventDayCircleCard({
   eventId,
+  eventHalls,
   circle,
   items,
 }: EventDayCircleCardProps) {
@@ -79,7 +81,7 @@ export function EventDayCircleCard({
           <div className="flex items-start gap-3">
             <div className="w-20 shrink-0 border-r border-slate-200 pr-3 dark:border-slate-700">
               <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                SPACE
+                {circle.hall ?? "未分類"} / SPACE
               </p>
               <p className="mt-1 break-words text-lg font-bold">
                 {circle.spaceNumber ?? "未設定"}
@@ -166,8 +168,10 @@ export function EventDayCircleCard({
                 <div className="mt-3">
                   <CircleForm
                     action={updateCircleWithIds}
+                    availableHalls={eventHalls}
                     initialValues={{
                       name: circle.name,
+                      hall: circle.hall ?? "",
                       spaceNumber: circle.spaceNumber ?? "",
                       priority: circle.priority,
                       visitStatus: circle.visitStatus,

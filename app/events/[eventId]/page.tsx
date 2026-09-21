@@ -146,6 +146,14 @@ export default async function EventDetailPage({
               </dt>
               <dd className="mt-1 break-words">{event.venue ?? "未設定"}</dd>
             </div>
+            <div className="sm:col-span-2">
+              <dt className="font-semibold text-slate-600 dark:text-slate-300">
+                使用ホール
+              </dt>
+              <dd className="mt-1 break-words">
+                {event.halls.length > 0 ? event.halls.join(" / ") : "未設定"}
+              </dd>
+            </div>
           </dl>
           {event.memo ? (
             <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-slate-600 dark:text-slate-300">
@@ -168,6 +176,7 @@ export default async function EventDetailPage({
                   plannedBudget: event.plannedBudget?.toString() ?? "",
                   venuePreset: venueSelection.preset,
                   venueCustom: venueSelection.custom,
+                  halls: event.halls,
                   memo: event.memo ?? "",
                 }}
                 submitLabel="変更を保存"
@@ -188,6 +197,7 @@ export default async function EventDetailPage({
           <CircleList
             circles={circlesResult.circles}
             eventId={event.id}
+            eventHalls={event.halls}
             filters={filters}
             items={itemsResult.items}
           />

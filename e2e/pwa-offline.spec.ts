@@ -151,7 +151,9 @@ test("Event-day snapshotを安全にoffline表示しlogoutで削除する", asyn
   await page.reload();
   await expect(page.getByText("オフラインデータ", { exact: true })).toBeVisible();
   await expect(page.getByText(event.name, { exact: true })).toBeVisible();
-  await expect(page.getByText("Offline Circle", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Offline Circle" }),
+  ).toBeVisible();
   await expect(page.getByText("Offline Item", { exact: true })).toBeVisible();
   await expect(page.getByText("¥1,400", { exact: true })).toBeVisible();
   await expect(
@@ -166,7 +168,9 @@ test("Event-day snapshotを安全にoffline表示しlogoutで削除する", asyn
   ).toBeEnabled();
   await page.getByRole("button", { name: "接続を確認して再試行" }).click();
   await expect(page.getByText("接続: オンライン", { exact: true })).toBeVisible();
-  await expect(page.getByText("Offline Circle", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Offline Circle" }),
+  ).toBeVisible();
 
   await page.getByRole("link", { name: "イベント一覧へ戻る" }).click();
   await page.getByRole("button", { name: "ログアウト" }).click();

@@ -16,6 +16,8 @@ test("Eventを作成・一覧表示・編集・削除できる", async ({
   await page
     .getByRole("combobox", { name: /^会場/ })
     .selectOption("東京ビッグサイト");
+  await page.getByLabel("東1").check();
+  await page.getByLabel("東2").check();
   await page.getByRole("button", { name: "イベントを作成" }).click();
 
   await expect(page).toHaveURL(/\/events\?notice=created$/);
@@ -26,7 +28,10 @@ test("Eventを作成・一覧表示・編集・削除できる", async ({
     .filter({ hasText: eventName })
     .getByRole("link")
     .click();
+  await expect(page.getByText("東1 / 東2", { exact: true })).toBeVisible();
   await page.getByText("イベント情報を編集", { exact: true }).click();
+  await expect(page.getByLabel("東1")).toBeChecked();
+  await expect(page.getByLabel("東2")).toBeChecked();
   await page.getByLabel(/イベント名/).fill(editedName);
   await page.getByLabel(/予定予算/).fill("15000");
   await page.getByRole("combobox", { name: /^会場/ }).selectOption("other");

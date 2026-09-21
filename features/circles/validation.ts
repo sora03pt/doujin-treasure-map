@@ -18,6 +18,7 @@ const VISIT_STATUSES: VisitStatus[] = [
 ];
 
 const NAME_MAX_LENGTH = 120;
+const HALL_MAX_LENGTH = 50;
 const SPACE_NUMBER_MAX_LENGTH = 50;
 const ASSIGNEE_MAX_LENGTH = 100;
 const MEMO_MAX_LENGTH = 2000;
@@ -94,6 +95,7 @@ export function validateCircleForm(
   const rawVisitStatus = readText(formData, "visit_status");
   const values: CircleFormValues = {
     name: readText(formData, "name"),
+    hall: readText(formData, "hall"),
     spaceNumber: readText(formData, "space_number"),
     priority: isPriority(rawPriority) ? rawPriority : "want",
     visitStatus: isVisitStatus(rawVisitStatus) ? rawVisitStatus : "unvisited",
@@ -111,6 +113,10 @@ export function validateCircleForm(
 
   if (values.spaceNumber.length > SPACE_NUMBER_MAX_LENGTH) {
     fieldErrors.spaceNumber = `スペース番号は${SPACE_NUMBER_MAX_LENGTH}文字以内で入力してください。`;
+  }
+
+  if (values.hall.length > HALL_MAX_LENGTH) {
+    fieldErrors.hall = `ホールは${HALL_MAX_LENGTH}文字以内で選択してください。`;
   }
 
   if (!isPriority(rawPriority)) {
@@ -146,6 +152,7 @@ export function validateCircleForm(
     ok: true,
     input: {
       name: values.name,
+      hall: values.hall || null,
       spaceNumber: values.spaceNumber || null,
       priority: values.priority,
       visitStatus: values.visitStatus,

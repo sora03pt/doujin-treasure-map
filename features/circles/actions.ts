@@ -34,6 +34,17 @@ function invalidOwnershipState(values: CircleFormState["values"]): CircleFormSta
   };
 }
 
+function invalidHallState(values: CircleFormState["values"]): CircleFormState {
+  return {
+    status: "error",
+    message: "入力内容を確認してください。",
+    fieldErrors: {
+      hall: "イベントで選択した使用ホールから選んでください。",
+    },
+    values,
+  };
+}
+
 function imageActionError(message: string): ReferenceImageActionState {
   return { status: "error", message };
 }
@@ -66,6 +77,10 @@ export async function createCircle(
 
   if (result.status === "not_found") {
     return invalidOwnershipState(validation.values);
+  }
+
+  if (result.status === "invalid_hall") {
+    return invalidHallState(validation.values);
   }
 
   if (result.status === "error") {
@@ -114,6 +129,10 @@ export async function updateCircle(
 
   if (result.status === "not_found") {
     return invalidOwnershipState(validation.values);
+  }
+
+  if (result.status === "invalid_hall") {
+    return invalidHallState(validation.values);
   }
 
   if (result.status === "error") {

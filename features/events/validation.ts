@@ -3,6 +3,10 @@ import type {
   EventFormValues,
   ValidatedEventInput,
 } from "@/features/events/types";
+import {
+  hasOnlyAllowedEventHalls,
+  normalizeEventHalls,
+} from "@/features/events/halls";
 import { resolveVenue } from "@/features/events/venue";
 
 const EVENT_ID_PATTERN =
@@ -29,6 +33,14 @@ function readText(formData: FormData, name: string) {
   const value = formData.get(name);
 
   return typeof value === "string" ? value.trim() : "";
+}
+
+function readTextList(formData: FormData, name: string) {
+  return formData
+    .getAll(name)
+    .filter((value): value is string => typeof value === "string")
+    .map((value) => value.trim())
+    .filter(Boolean);
 }
 
 function parseInteger(value: string) {
@@ -70,6 +82,7 @@ export function validateEventForm(formData: FormData): EventValidationResult {
     plannedBudget: readText(formData, "planned_budget"),
     venuePreset: readText(formData, "venue_preset"),
     venueCustom: readText(formData, "venue_custom"),
+    halls: readTextList(formData, "halls"),
     memo: readText(formData, "memo"),
   };
   const fieldErrors: EventFieldErrors = {};
@@ -77,6 +90,7 @@ export function validateEventForm(formData: FormData): EventValidationResult {
     ? parseInteger(values.plannedBudget)
     : null;
   const venue = resolveVenue(values.venuePreset, values.venueCustom);
+  const normalizedHalls = normalizeEventHalls(venue, values.halls);
 
   if (!values.name) {
     fieldErrors.name = "イベント名を入力してください。";
@@ -105,6 +119,10 @@ export function validateEventForm(formData: FormData): EventValidationResult {
     fieldErrors.venueCustom = `会場は${VENUE_MAX_LENGTH}文字以内で入力してください。`;
   }
 
+  if (!hasOnlyAllowedEventHalls(venue, values.halls)) {
+    fieldErrors.halls = "選択した会場で利用できるホールを選んでください。";
+  }
+
   if (values.memo.length > MEMO_MAX_LENGTH) {
     fieldErrors.memo = `メモは${MEMO_MAX_LENGTH}文字以内で入力してください。`;
   }
@@ -120,6 +138,7 @@ export function validateEventForm(formData: FormData): EventValidationResult {
       eventDate: values.eventDate,
       plannedBudget,
       venue: venue || null,
+      halls: normalizedHalls,
       memo: values.memo || null,
     },
     values,

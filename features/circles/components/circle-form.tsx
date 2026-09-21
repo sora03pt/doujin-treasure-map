@@ -15,6 +15,7 @@ type CircleFormAction = (
 
 type CircleFormProps = {
   action: CircleFormAction;
+  availableHalls: string[];
   initialValues: CircleFormValues;
   submitLabel: string;
 };
@@ -24,6 +25,7 @@ const inputClassName =
 
 export const emptyCircleFormValues: CircleFormValues = {
   name: "",
+  hall: "",
   spaceNumber: "",
   priority: "want",
   visitStatus: "unvisited",
@@ -34,6 +36,7 @@ export const emptyCircleFormValues: CircleFormValues = {
 
 export function CircleForm({
   action,
+  availableHalls,
   initialValues,
   submitLabel,
 }: CircleFormProps) {
@@ -116,6 +119,47 @@ export function CircleForm({
           type="text"
         />
         {state.fieldErrors.spaceNumber ? <p className="text-sm text-red-700" id={errorId("space-number")}>{state.fieldErrors.spaceNumber}</p> : null}
+      </div>
+
+      <div className="space-y-2">
+        <label className="block text-sm font-semibold" htmlFor={fieldId("hall")}>
+          ホール <span className="font-normal text-slate-500">（任意）</span>
+        </label>
+        <select
+          aria-describedby={
+            state.fieldErrors.hall
+              ? errorId("hall")
+              : availableHalls.length === 0
+                ? `${fieldId("hall")}-help`
+                : undefined
+          }
+          aria-invalid={Boolean(state.fieldErrors.hall)}
+          className={inputClassName}
+          defaultValue={
+            availableHalls.includes(state.values.hall) ? state.values.hall : ""
+          }
+          disabled={controlsDisabled || availableHalls.length === 0}
+          id={fieldId("hall")}
+          name="hall"
+        >
+          <option value="">未設定</option>
+          {availableHalls.map((hall) => (
+            <option key={hall} value={hall}>{hall}</option>
+          ))}
+        </select>
+        {availableHalls.length === 0 ? (
+          <p
+            className="text-xs leading-5 text-slate-500 dark:text-slate-400"
+            id={`${fieldId("hall")}-help`}
+          >
+            イベント情報で使用ホールを選択すると設定できます。
+          </p>
+        ) : null}
+        {state.fieldErrors.hall ? (
+          <p className="text-sm text-red-700" id={errorId("hall")}>
+            {state.fieldErrors.hall}
+          </p>
+        ) : null}
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">

@@ -8,6 +8,7 @@ type TestFixtures = {
   loginAsTestUser: () => Promise<void>;
   normalUserClient: SupabaseClient<Database>;
   seedEvent: (overrides?: {
+    halls?: string[];
     name?: string;
     plannedBudget?: number | null;
   }) => Promise<{ id: string; name: string }>;
@@ -143,6 +144,7 @@ export const test = base.extend<TestFixtures>({
           user_id: user.id,
           name,
           event_date: "2026-09-01",
+          halls: overrides.halls ?? [],
           planned_budget: overrides.plannedBudget ?? null,
         })
         .select("id")

@@ -33,6 +33,7 @@ export default function NewEventPage() {
               plannedBudget: "",
               venuePreset: "東京ビッグサイト",
               venueCustom: "",
+              halls: [],
               memo: "",
             }}
             submitLabel="イベントを作成"

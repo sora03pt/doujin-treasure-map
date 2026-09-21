@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  buildRecommendedRoute,
   filterCirclesForEventDay,
   parseEventDayFilters,
   sortCirclesForEventDay,
@@ -9,7 +10,13 @@ import {
   summarizeEventDay,
 } from "./event-day.ts";
 
-function circle(id, priority, spaceNumber, visitStatus = "unvisited") {
+function circle(
+  id,
+  priority,
+  spaceNumber,
+  visitStatus = "unvisited",
+  hall = null,
+) {
   return {
     id,
     eventId: "event-id",
@@ -18,6 +25,7 @@ function circle(id, priority, spaceNumber, visitStatus = "unvisited") {
     imagePath: null,
     imageUrl: null,
     distributionPostUrl: null,
+    hall,
     spaceNumber,
     xUrl: null,
     webUrl: null,
@@ -28,6 +36,10 @@ function circle(id, priority, spaceNumber, visitStatus = "unvisited") {
     createdAt: "2026-09-01T00:00:00Z",
     updatedAt: "2026-09-01T00:00:00Z",
   };
+}
+
+function routeIds(groups) {
+  return groups.flatMap((group) => group.entries.map(({ circle: value }) => value.id));
 }
 
 function item(id, price, quantity) {
@@ -121,4 +133,79 @@ test("価格未設定を除外し、数量込みでItem合計を算出する", (
   assert.equal(summary.totalAmount, 1100);
   assert.deepEqual(summary.names, ["Item priced", "Item free", "Item unknown"]);
   assert.equal(summary.remainingCount, 1);
+});
+
+test("おすすめ巡回順はEventのホール順をpriorityより先に適用する", () => {
+  const groups = buildRecommendedRoute(
+    [
+      circle("east-2-must", "must", "B1", "unvisited", "東2"),
+      circle("east-1-want", "want", "A1", "unvisited", "東1"),
+      circle("east-1-must", "must", "A9", "unvisited", "東1"),
+    ],
+    ["東1", "東2"],
+    { visitStatus: "all", priority: "all" },
+  );
+
+  assert.deepEqual(groups.map(({ label }) => label), ["東1", "東2"]);
+  assert.deepEqual(routeIds(groups), ["east-1-must", "east-1-want", "east-2-must"]);
+  assert.deepEqual(
+    groups.flatMap((group) => group.entries.map(({ position }) => position)),
+    [1, 2, 3],
+  );
+});
+
+test("同じホールとpriorityではspace_number自然順で未設定を最後にする", () => {
+  const groups = buildRecommendedRoute(
+    [
+      circle("none", "must", null, "unvisited", "東1"),
+      circle("a10", "must", "A10", "unvisited", "東1"),
+      circle("a2", "must", "A2", "unvisited", "東1"),
+    ],
+    ["東1"],
+    { visitStatus: "all", priority: "all" },
+  );
+
+  assert.deepEqual(routeIds(groups), ["a2", "a10", "none"]);
+});
+
+test("hall未設定とEvent使用ホール外は未分類として最後にまとめる", () => {
+  const groups = buildRecommendedRoute(
+    [
+      circle("no-hall", "must", "A1"),
+      circle("outside", "want", "A2", "unvisited", "東2"),
+      circle("classified", "if_time", "A3", "unvisited", "東1"),
+    ],
+    ["東1"],
+    { visitStatus: "all", priority: "all" },
+  );
+
+  assert.deepEqual(groups.map(({ label }) => label), ["東1", "未分類"]);
+  assert.deepEqual(routeIds(groups), ["classified", "no-hall", "outside"]);
+});
+
+test("おすすめ巡回順は未訪問だけを対象にpriority filterも維持する", () => {
+  const circles = [
+    circle("target", "must", "A1", "unvisited", "東1"),
+    circle("want", "want", "A2", "unvisited", "東1"),
+    circle("purchased", "must", "A3", "purchased", "東1"),
+    circle("sold-out", "must", "A4", "sold_out", "東1"),
+    circle("skipped", "must", "A5", "skipped", "東1"),
+  ];
+
+  assert.deepEqual(
+    routeIds(
+      buildRecommendedRoute(circles, ["東1"], {
+        visitStatus: "all",
+        priority: "must",
+      }),
+    ),
+    ["target"],
+  );
+  assert.deepEqual(
+    buildRecommendedRoute(circles, ["東1"], {
+      visitStatus: "purchased",
+      priority: "all",
+    }),
+    [],
+  );
 });

@@ -26,23 +26,25 @@ async function getAuthenticatedContext() {
   return { supabase, userId: user.id };
 }
 
-async function hasOwnedEvent(
+async function getOwnedEvent(
   context: NonNullable<Awaited<ReturnType<typeof getAuthenticatedContext>>>,
   eventId: string,
 ) {
   const { data, error } = await context.supabase
     .from("events")
-    .select("id")
+    .select("id,halls")
     .eq("id", eventId)
     .eq("user_id", context.userId)
     .maybeSingle();
 
   if (error) {
     console.error("Failed to verify event ownership", { code: error.code });
-    return "error" as const;
+    return { status: "error" as const, halls: [] };
   }
 
-  return data ? ("owned" as const) : ("not_found" as const);
+  return data
+    ? { status: "owned" as const, halls: data.halls }
+    : { status: "not_found" as const, halls: [] };
 }
 
 function toCircle(row: {
@@ -52,6 +54,7 @@ function toCircle(row: {
   name: string;
   image_path: string | null;
   distribution_post_url: string | null;
+  hall: string | null;
   space_number: string | null;
   x_url: string | null;
   web_url: string | null;
@@ -70,6 +73,7 @@ function toCircle(row: {
     imagePath: row.image_path,
     imageUrl,
     distributionPostUrl: row.distribution_post_url,
+    hall: row.hall,
     spaceNumber: row.space_number,
     xUrl: row.x_url,
     webUrl: row.web_url,
@@ -85,6 +89,7 @@ function toCircle(row: {
 function toDatabaseInput(input: ValidatedCircleInput) {
   return {
     name: input.name,
+    hall: input.hall,
     space_number: input.spaceNumber,
     priority: input.priority,
     visit_status: input.visitStatus,
@@ -99,10 +104,10 @@ async function findOwnedCircle(
   eventId: string,
   circleId: string,
 ) {
-  const ownership = await hasOwnedEvent(context, eventId);
+  const ownership = await getOwnedEvent(context, eventId);
 
-  if (ownership !== "owned") {
-    return { status: ownership } as const;
+  if (ownership.status !== "owned") {
+    return ownership;
   }
 
   const { data, error } = await context.supabase
@@ -119,7 +124,7 @@ async function findOwnedCircle(
   }
 
   return data
-    ? { status: "owned" as const }
+    ? { status: "owned" as const, eventHalls: ownership.halls }
     : { status: "not_found" as const };
 }
 
@@ -130,16 +135,16 @@ export async function listCirclesForCurrentUser(eventId: string) {
     return { status: "unauthenticated" as const, circles: [] };
   }
 
-  const ownership = await hasOwnedEvent(context, eventId);
+  const ownership = await getOwnedEvent(context, eventId);
 
-  if (ownership !== "owned") {
-    return { status: ownership, circles: [] };
+  if (ownership.status !== "owned") {
+    return { status: ownership.status, circles: [] };
   }
 
   const { data, error } = await context.supabase
     .from("circles")
     .select(
-      "id,event_id,user_id,name,image_path,distribution_post_url,space_number,x_url,web_url,memo,priority,assignee,visit_status,created_at,updated_at",
+      "id,event_id,user_id,name,image_path,distribution_post_url,hall,space_number,x_url,web_url,memo,priority,assignee,visit_status,created_at,updated_at",
     )
     .eq("event_id", eventId)
     .eq("user_id", context.userId)
@@ -173,10 +178,14 @@ export async function createCircleForCurrentUser(
     return { status: "unauthenticated" as const };
   }
 
-  const ownership = await hasOwnedEvent(context, eventId);
+  const ownership = await getOwnedEvent(context, eventId);
 
-  if (ownership !== "owned") {
-    return { status: ownership };
+  if (ownership.status !== "owned") {
+    return { status: ownership.status };
+  }
+
+  if (input.hall && !ownership.halls.includes(input.hall)) {
+    return { status: "invalid_hall" as const };
   }
 
   const { data, error } = await context.supabase
@@ -212,6 +221,10 @@ export async function updateCircleForCurrentUser(
 
   if (ownership.status !== "owned") {
     return ownership;
+  }
+
+  if (input.hall && !ownership.eventHalls.includes(input.hall)) {
+    return { status: "invalid_hall" as const };
   }
 
   const { data, error } = await context.supabase

@@ -7,6 +7,7 @@ export type Event = {
   eventDate: string;
   plannedBudget: number | null;
   venue: string | null;
+  halls: string[];
   memo: string | null;
   createdAt: string;
   updatedAt: string;
@@ -23,6 +24,7 @@ export type EventFormValues = {
   plannedBudget: string;
   venuePreset: string;
   venueCustom: string;
+  halls: string[];
   memo: string;
 };
 
@@ -47,5 +49,6 @@ export type ValidatedEventInput = {
   eventDate: string;
   plannedBudget: number | null;
   venue: string | null;
+  halls: string[];
   memo: string | null;
 };

@@ -21,6 +21,7 @@ Owned by one user.
 - `name text not null`
 - `event_date date not null`
 - `venue text`
+- `halls text[] not null default '{}'::text[]`
 - `memo text`
 - timestamps
 
@@ -34,6 +35,7 @@ Owned by one user and belongs to one event.
 - `name text not null`
 - `image_path text`
 - `distribution_post_url text`
+- `hall text`
 - `space_number text not null`
 - `x_url text`
 - `web_url text`
