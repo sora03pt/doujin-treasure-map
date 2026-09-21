@@ -17,7 +17,11 @@ test("Circle・Item CRUD、filter、quick update、Budgetを連携できる", as
   page,
   seedEvent,
 }) => {
-  const event = await seedEvent({ plannedBudget: 5_000 });
+  const event = await seedEvent({
+    halls: ["東1", "東2"],
+    plannedBudget: 5_000,
+    venue: "東京ビッグサイト",
+  });
   const circleName = `${e2ePrefix}Circle A`;
   const editedCircleName = `${circleName} edited`;
   const secondCircleName = `${e2ePrefix}Circle B`;
@@ -37,6 +41,7 @@ test("Circle・Item CRUD、filter、quick update、Budgetを連携できる", as
       event_id: event.id,
       user_id: user.id,
       name: secondCircleName,
+      hall: "東2",
       priority: "want",
       visit_status: "unvisited",
       space_number: "A10",
@@ -58,13 +63,19 @@ test("Circle・Item CRUD、filter、quick update、Budgetを連携できる", as
   await ensureDetailsOpen(addCircleDetails);
   await addCircleDetails.getByLabel(/サークル名/).fill(circleName);
   await addCircleDetails.getByLabel(/スペース番号/).fill("A2");
+  await addCircleDetails.getByLabel(/ホール/).selectOption("東1");
   await addCircleDetails.getByLabel("優先度").selectOption("must");
   await addCircleDetails
     .getByRole("button", { name: "サークルを保存" })
     .click();
 
-  await expect(page.getByText(circleName, { exact: true })).toBeVisible();
-  let circleCard = page.locator("li").filter({ hasText: circleName });
+  const recommendedRoute = page.locator(
+    'section[aria-labelledby="recommended-route-title"]',
+  );
+  await expect(recommendedRoute.getByRole("heading", { name: "東1" })).toBeVisible();
+  await expect(recommendedRoute.getByRole("heading", { name: "東2" })).toBeVisible();
+  await expect(recommendedRoute.getByText(circleName, { exact: true })).toBeVisible();
+  let circleCard = page.locator("li:has(article)").filter({ hasText: circleName });
   let managementDetails = circleCard
     .locator("details")
     .filter({ hasText: "編集・頒布物管理" });
@@ -72,8 +83,10 @@ test("Circle・Item CRUD、filter、quick update、Budgetを連携できる", as
   await circleCard.getByLabel(/サークル名/).fill(editedCircleName);
   await circleCard.getByRole("button", { name: "サークルを更新" }).click();
 
-  await expect(page.getByText(editedCircleName, { exact: true })).toBeVisible();
-  circleCard = page.locator("li").filter({ hasText: editedCircleName });
+  await expect(
+    page.locator("li:has(article)").getByText(editedCircleName, { exact: true }),
+  ).toBeVisible();
+  circleCard = page.locator("li:has(article)").filter({ hasText: editedCircleName });
   managementDetails = circleCard
     .locator("details")
     .filter({ hasText: "編集・頒布物管理" });
@@ -98,7 +111,7 @@ test("Circle・Item CRUD、filter、quick update、Budgetを連携できる", as
     budgetSummary.getByText("¥0", { exact: true }),
   ).toBeVisible();
 
-  circleCard = page.locator("li").filter({ hasText: editedCircleName });
+  circleCard = page.locator("li:has(article)").filter({ hasText: editedCircleName });
   await circleCard.getByRole("button", { name: "購入済み" }).click();
   await expect(circleCard.getByText("訪問状態: 購入済み")).toBeVisible();
   await expect(
@@ -119,7 +132,9 @@ test("Circle・Item CRUD、filter、quick update、Budgetを連携できる", as
   await expect(page).toHaveURL(
     new RegExp(`/events/${event.id}\\?status=unvisited#circles$`),
   );
-  await expect(page.getByText(secondCircleName, { exact: true })).toBeVisible();
+  await expect(
+    page.locator("li:has(article)").getByText(secondCircleName, { exact: true }),
+  ).toBeVisible();
   await expect(page.getByText(editedCircleName, { exact: true })).toHaveCount(0);
 
   await statusFilters.getByRole("link", { name: "すべて" }).click();
@@ -136,7 +151,7 @@ test("Circle・Item CRUD、filter、quick update、Budgetを連携できる", as
   await priorityFilters.getByRole("link", { name: "すべて" }).click();
   await expect(page).toHaveURL(new RegExp(`/events/${event.id}#circles$`));
 
-  circleCard = page.locator("li").filter({ hasText: editedCircleName });
+  circleCard = page.locator("li:has(article)").filter({ hasText: editedCircleName });
   managementDetails = circleCard
     .locator("details")
     .filter({ hasText: "編集・頒布物管理" });
@@ -158,7 +173,7 @@ test("Circle・Item CRUD、filter、quick update、Budgetを連携できる", as
     budgetSummary.getByText("¥3,800", { exact: true }),
   ).toBeVisible();
 
-  circleCard = page.locator("li").filter({ hasText: editedCircleName });
+  circleCard = page.locator("li:has(article)").filter({ hasText: editedCircleName });
   managementDetails = circleCard
     .locator("details")
     .filter({ hasText: "編集・頒布物管理" });
@@ -173,7 +188,7 @@ test("Circle・Item CRUD、filter、quick update、Budgetを連携できる", as
     .click();
   await expect(page.getByText(editedItemName, { exact: true })).toHaveCount(0);
 
-  circleCard = page.locator("li").filter({ hasText: editedCircleName });
+  circleCard = page.locator("li:has(article)").filter({ hasText: editedCircleName });
   managementDetails = circleCard
     .locator("details")
     .filter({ hasText: "編集・頒布物管理" });

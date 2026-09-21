@@ -14,7 +14,7 @@ Shows the user's events ordered by date. Empty state should lead to event creati
 
 ### Event Create / Edit
 
-Form for event name, date, venue, memo, and planned budget.
+Form for event name, date, venue, venue-defined halls, memo, and planned budget.
 
 ### Event Detail / Event-Day Screen
 
@@ -23,6 +23,7 @@ Primary MVP screen.
 - Budget summary
 - Filter controls
 - Priority/status summary
+- Recommended route grouped by event hall order, then priority and space number
 - Circle checklist ordered by priority and space number
 - Fast visit status updates
 - Links to X/Web when present

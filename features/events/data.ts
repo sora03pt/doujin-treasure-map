@@ -6,6 +6,7 @@ import type {
   EventSummary,
   ValidatedEventInput,
 } from "@/features/events/types";
+import { normalizeEventHalls } from "@/features/events/halls";
 import { removeReferenceImages } from "@/features/images/storage";
 
 async function getAuthenticatedContext() {
@@ -43,6 +44,7 @@ function toEvent(row: {
   event_date: string;
   planned_budget: number | null;
   venue: string | null;
+  halls: string[];
   memo: string | null;
   created_at: string;
   updated_at: string;
@@ -54,6 +56,7 @@ function toEvent(row: {
     eventDate: row.event_date,
     plannedBudget: row.planned_budget,
     venue: row.venue,
+    halls: normalizeEventHalls(row.venue, row.halls),
     memo: row.memo,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -66,6 +69,7 @@ function toDatabaseInput(input: ValidatedEventInput) {
     event_date: input.eventDate,
     planned_budget: input.plannedBudget,
     venue: input.venue,
+    halls: input.halls,
     memo: input.memo,
   };
 }
@@ -105,7 +109,7 @@ export async function getEventForCurrentUser(eventId: string) {
   const { data, error } = await context.supabase
     .from("events")
     .select(
-      "id,user_id,name,event_date,planned_budget,venue,memo,created_at,updated_at",
+      "id,user_id,name,event_date,planned_budget,venue,halls,memo,created_at,updated_at",
     )
     .eq("id", eventId)
     .eq("user_id", context.userId)

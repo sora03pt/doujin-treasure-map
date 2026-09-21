@@ -5,7 +5,9 @@ import {
 } from "@/features/circles/components/circle-form";
 import { EventDayCircleCard } from "@/features/circles/components/event-day-circle-card";
 import { EventDayFilters } from "@/features/circles/components/event-day-filters";
+import { RecommendedRoute } from "@/features/circles/components/recommended-route";
 import {
+  buildRecommendedRoute,
   filterCirclesForEventDay,
   sortCirclesForEventDay,
   type EventDayFilters as EventDayFilterValues,
@@ -15,6 +17,7 @@ import type { Item } from "@/features/items/types";
 
 type CircleListProps = {
   eventId: string;
+  eventHalls: string[];
   circles: Circle[];
   filters: EventDayFilterValues;
   items: Item[];
@@ -22,6 +25,7 @@ type CircleListProps = {
 
 export function CircleList({
   eventId,
+  eventHalls,
   circles,
   filters,
   items,
@@ -31,6 +35,7 @@ export function CircleList({
     filterCirclesForEventDay(circles, filters),
   );
   const itemsByCircle = new Map<string, Item[]>();
+  const recommendedRoute = buildRecommendedRoute(circles, eventHalls, filters);
 
   items.forEach((item) => {
     const circleItems = itemsByCircle.get(item.circleId) ?? [];
@@ -55,12 +60,15 @@ export function CircleList({
       </div>
 
       {circles.length > 0 ? (
-        <EventDayFilters
-          eventId={eventId}
-          filters={filters}
-          resultCount={displayedCircles.length}
-          totalCount={circles.length}
-        />
+        <>
+          <EventDayFilters
+            eventId={eventId}
+            filters={filters}
+            resultCount={displayedCircles.length}
+            totalCount={circles.length}
+          />
+          <RecommendedRoute groups={recommendedRoute} />
+        </>
       ) : null}
 
       <details className="group mt-4">
@@ -70,6 +78,7 @@ export function CircleList({
         <div className="mt-4 border-l-2 border-blue-500 pl-3 sm:pl-4">
           <CircleForm
             action={createCircleForEvent}
+            availableHalls={eventHalls}
             initialValues={emptyCircleFormValues}
             submitLabel="サークルを保存"
           />
@@ -96,6 +105,7 @@ export function CircleList({
             <EventDayCircleCard
               circle={circle}
               eventId={eventId}
+              eventHalls={eventHalls}
               items={itemsByCircle.get(circle.id) ?? []}
               key={circle.id}
             />

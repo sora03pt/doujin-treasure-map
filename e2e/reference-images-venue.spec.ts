@@ -102,7 +102,7 @@ test("会場、X投稿URL、Circle・Item画像を登録・差し替え・削除
     .fill("https://x.com/test_user/status/123456789?s=20");
   await addCircle.getByRole("button", { name: "サークルを保存" }).click();
 
-  let circleCard = page.locator("li").filter({ hasText: circleName });
+  let circleCard = page.locator("li:has(article)").filter({ hasText: circleName });
   const xLink = circleCard.getByRole("link", { name: /頒布情報をXで見る/ });
   await expect(xLink).toHaveAttribute(
     "href",
@@ -114,7 +114,7 @@ test("会場、X投稿URL、Circle・Item画像を登録・差し替え・削除
   let imageRegion = management.getByRole("region", { name: "参照画像" }).first();
   await uploadImage(imageRegion, imageBuffer);
 
-  circleCard = page.locator("li").filter({ hasText: circleName });
+  circleCard = page.locator("li:has(article)").filter({ hasText: circleName });
   const circleImageButton = circleCard.getByRole("button", {
     name: `${circleName}の参照画像を拡大表示`,
   }).first();
@@ -138,7 +138,7 @@ test("会場、X投稿URL、Circle・Item画像を登録・差し替え・削除
     .single();
   expect(circle?.image_path).toContain(`/circles/${circle?.id}/reference`);
 
-  circleCard = page.locator("li").filter({ hasText: circleName });
+  circleCard = page.locator("li:has(article)").filter({ hasText: circleName });
   management = circleCard.locator("details").filter({ hasText: "編集・頒布物管理" });
   await ensureDetailsOpen(management);
   const addItem = management.locator("details").filter({ hasText: "頒布物を追加" }).last();
@@ -149,7 +149,7 @@ test("会場、X投稿URL、Circle・Item画像を登録・差し替え・削除
     page.getByText("頒布物を追加しました。", { exact: true }),
   ).toBeVisible();
 
-  circleCard = page.locator("li").filter({ hasText: circleName });
+  circleCard = page.locator("li:has(article)").filter({ hasText: circleName });
   management = circleCard.locator("details").filter({ hasText: "編集・頒布物管理" });
   await ensureDetailsOpen(management);
   let itemRow = management.locator("li").filter({ hasText: itemName });
@@ -158,7 +158,7 @@ test("会場、X投稿URL、Circle・Item画像を登録・差し替え・削除
   let itemImageRegion = editItem.getByRole("region", { name: "参照画像" });
   await uploadImage(itemImageRegion, imageBuffer);
 
-  circleCard = page.locator("li").filter({ hasText: circleName });
+  circleCard = page.locator("li:has(article)").filter({ hasText: circleName });
   management = circleCard.locator("details").filter({ hasText: "編集・頒布物管理" });
   await ensureDetailsOpen(management);
   itemRow = management.locator("li").filter({ hasText: itemName });
@@ -172,7 +172,7 @@ test("会場、X投稿URL、Circle・Item画像を登録・差し替え・削除
   await itemImageRegion.getByRole("button", { name: "登録画像を削除" }).click();
   await expect(itemImageRegion.getByText("画像を削除しました。", { exact: true })).toBeVisible();
 
-  circleCard = page.locator("li").filter({ hasText: circleName });
+  circleCard = page.locator("li:has(article)").filter({ hasText: circleName });
   management = circleCard.locator("details").filter({ hasText: "編集・頒布物管理" });
   await ensureDetailsOpen(management);
   imageRegion = management.getByRole("region", { name: "参照画像" }).first();
@@ -261,7 +261,7 @@ test("Item・Circle削除時に関連画像をStorageから削除する", async 
   await loginAsTestUser();
   await page.goto(`/events/${event.id}`);
 
-  let circleCard = page.locator("li").filter({ hasText: circleName });
+  let circleCard = page.locator("li:has(article)").filter({ hasText: circleName });
   let management = circleCard
     .locator("details")
     .filter({ hasText: "編集・頒布物管理" });
@@ -281,7 +281,7 @@ test("Item・Circle削除時に関連画像をStorageから削除する", async 
     false,
   );
 
-  circleCard = page.locator("li").filter({ hasText: circleName });
+  circleCard = page.locator("li:has(article)").filter({ hasText: circleName });
   management = circleCard
     .locator("details")
     .filter({ hasText: "編集・頒布物管理" });

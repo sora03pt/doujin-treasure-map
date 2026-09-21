@@ -11,13 +11,13 @@ The product must not depend on a specific event name, official catalog service, 
 ### Event
 
 - Create and manage events.
-- Fields: name, event date, venue, memo. Planned budget is deferred to Phase 5 database work.
+- Fields: name, event date, venue, used halls, memo, and planned budget.
 - The app must accept any event name supplied by the user.
 
 ### Circle
 
 - Register target circles per event.
-- Fields: circle name, space number, X URL, web URL, memo, priority, assignee, visit status.
+- Fields: circle name, hall, space number, X URL, web URL, memo, priority, assignee, visit status.
 - Priority values:
   - `must`: 最優先
   - `want`: 行きたい
@@ -56,6 +56,12 @@ Minimum event-day filters:
 - purchased
 - assignee
 - space number search
+
+### Recommended Route
+
+- Targets unvisited circles only.
+- Sorts by the event's venue-defined hall order, priority, and natural space-number order.
+- Groups missing or out-of-selection halls under `未分類` at the end.
 
 ### Offline
 

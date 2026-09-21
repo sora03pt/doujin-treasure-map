@@ -6,6 +6,7 @@ import type {
   EventFormState,
   EventFormValues,
 } from "@/features/events/types";
+import { getHallOptionsForVenue } from "@/features/events/halls";
 import { useConnectivity } from "@/features/offline/components/connectivity-provider";
 import { VENUE_PRESETS } from "@/features/events/venue";
 
@@ -37,6 +38,9 @@ export function EventForm({
   });
   const errorSummaryRef = useRef<HTMLParagraphElement>(null);
   const [venuePreset, setVenuePreset] = useState(initialValues.venuePreset);
+  const hallOptions = getHallOptionsForVenue(
+    venuePreset === "other" ? null : venuePreset,
+  );
   const { isOnline } = useConnectivity();
   const controlsDisabled = isPending || !isOnline;
 
@@ -224,6 +228,48 @@ export function EventForm({
       ) : (
         <input name="venue_custom" type="hidden" value="" />
       )}
+
+      {hallOptions.length > 0 ? (
+        <fieldset
+          aria-describedby={
+            state.fieldErrors.halls ? errorId("halls") : `${fieldId("halls")}-help`
+          }
+          className="space-y-2"
+        >
+          <legend className="text-sm font-semibold">
+            使用ホール <span className="font-normal text-slate-500">（任意）</span>
+          </legend>
+          <p
+            className="text-xs leading-5 text-slate-500 dark:text-slate-400"
+            id={`${fieldId("halls")}-help`}
+          >
+            当日使用するホールを複数選択できます。
+          </p>
+          <div className="grid grid-cols-4 gap-2">
+            {hallOptions.map((hall) => (
+              <label
+                className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-2 text-sm font-semibold has-checked:border-blue-600 has-checked:bg-blue-50 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-blue-600 dark:border-slate-700 dark:bg-slate-950 dark:has-checked:border-blue-400 dark:has-checked:bg-blue-950"
+                key={hall}
+              >
+                <input
+                  className="h-4 w-4 accent-blue-700"
+                  defaultChecked={state.values.halls.includes(hall)}
+                  disabled={controlsDisabled}
+                  name="halls"
+                  type="checkbox"
+                  value={hall}
+                />
+                {hall}
+              </label>
+            ))}
+          </div>
+          {state.fieldErrors.halls ? (
+            <p className="text-sm text-red-700" id={errorId("halls")}>
+              {state.fieldErrors.halls}
+            </p>
+          ) : null}
+        </fieldset>
+      ) : null}
 
       <div className="space-y-2">
         <label

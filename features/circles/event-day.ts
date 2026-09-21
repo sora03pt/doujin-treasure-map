@@ -18,6 +18,17 @@ export type EventDayProgress = Record<VisitStatus, number> & {
   handled: number;
 };
 
+export type RecommendedRouteEntry = {
+  circle: Circle;
+  position: number;
+};
+
+export type RecommendedRouteGroup = {
+  hall: string | null;
+  label: string;
+  entries: RecommendedRouteEntry[];
+};
+
 const priorityOrder: Record<CirclePriority, number> = {
   must: 0,
   want: 1,
@@ -37,6 +48,32 @@ const spaceNumberCollator = new Intl.Collator("ja-JP", {
   numeric: true,
   sensitivity: "base",
 });
+
+function compareByPriorityAndSpace(left: Circle, right: Circle) {
+  const priorityDifference =
+    priorityOrder[left.priority] - priorityOrder[right.priority];
+
+  if (priorityDifference !== 0) {
+    return priorityDifference;
+  }
+
+  if (left.spaceNumber && right.spaceNumber) {
+    const spaceDifference = spaceNumberCollator.compare(
+      left.spaceNumber,
+      right.spaceNumber,
+    );
+
+    if (spaceDifference !== 0) {
+      return spaceDifference;
+    }
+  } else if (left.spaceNumber) {
+    return -1;
+  } else if (right.spaceNumber) {
+    return 1;
+  }
+
+  return spaceNumberCollator.compare(left.name, right.name);
+}
 
 function firstQueryValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -60,31 +97,54 @@ export function parseEventDayFilters(query: {
 }
 
 export function sortCirclesForEventDay(circles: Circle[]) {
-  return [...circles].sort((left, right) => {
-    const priorityDifference =
-      priorityOrder[left.priority] - priorityOrder[right.priority];
+  return [...circles].sort(compareByPriorityAndSpace);
+}
 
-    if (priorityDifference !== 0) {
-      return priorityDifference;
+export function buildRecommendedRoute(
+  circles: Circle[],
+  eventHalls: readonly string[],
+  filters: EventDayFilters,
+): RecommendedRouteGroup[] {
+  const hallOrder = new Map(
+    [...new Set(eventHalls)].map((hall, index) => [hall, index]),
+  );
+  const unclassifiedIndex = hallOrder.size;
+  const routeCircles = filterCirclesForEventDay(circles, filters)
+    .filter((circle) => circle.visitStatus === "unvisited")
+    .sort((left, right) => {
+      const leftHall = left.hall && hallOrder.has(left.hall) ? left.hall : null;
+      const rightHall =
+        right.hall && hallOrder.has(right.hall) ? right.hall : null;
+      const hallDifference =
+        (leftHall === null
+          ? unclassifiedIndex
+          : hallOrder.get(leftHall) ?? unclassifiedIndex) -
+        (rightHall === null
+          ? unclassifiedIndex
+          : hallOrder.get(rightHall) ?? unclassifiedIndex);
+
+      return hallDifference || compareByPriorityAndSpace(left, right);
+    });
+  const groups: RecommendedRouteGroup[] = [];
+
+  routeCircles.forEach((circle, index) => {
+    const hall = circle.hall && hallOrder.has(circle.hall) ? circle.hall : null;
+    const previousGroup = groups.at(-1);
+    const entry = { circle, position: index + 1 };
+
+    if (previousGroup?.hall === hall) {
+      previousGroup.entries.push(entry);
+      return;
     }
 
-    if (left.spaceNumber && right.spaceNumber) {
-      const spaceDifference = spaceNumberCollator.compare(
-        left.spaceNumber,
-        right.spaceNumber,
-      );
-
-      if (spaceDifference !== 0) {
-        return spaceDifference;
-      }
-    } else if (left.spaceNumber) {
-      return -1;
-    } else if (right.spaceNumber) {
-      return 1;
-    }
-
-    return spaceNumberCollator.compare(left.name, right.name);
+    groups.push({
+      hall,
+      label: hall ?? "未分類",
+      entries: [entry],
+    });
   });
+
+  return groups;
 }
 
 export function filterCirclesForEventDay(

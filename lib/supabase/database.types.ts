@@ -17,6 +17,7 @@ export type Database = {
           event_date: string;
           planned_budget: number | null;
           venue: string | null;
+          halls: string[];
           memo: string | null;
           created_at: string;
           updated_at: string;
@@ -28,6 +29,7 @@ export type Database = {
           event_date: string;
           planned_budget?: number | null;
           venue?: string | null;
+          halls?: string[];
           memo?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -39,6 +41,7 @@ export type Database = {
           event_date?: string;
           planned_budget?: number | null;
           venue?: string | null;
+          halls?: string[];
           memo?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -53,6 +56,7 @@ export type Database = {
           name: string;
           image_path: string | null;
           distribution_post_url: string | null;
+          hall: string | null;
           space_number: string | null;
           x_url: string | null;
           web_url: string | null;
@@ -70,6 +74,7 @@ export type Database = {
           name: string;
           image_path?: string | null;
           distribution_post_url?: string | null;
+          hall?: string | null;
           space_number?: string | null;
           x_url?: string | null;
           web_url?: string | null;
@@ -87,6 +92,7 @@ export type Database = {
           name?: string;
           image_path?: string | null;
           distribution_post_url?: string | null;
+          hall?: string | null;
           space_number?: string | null;
           x_url?: string | null;
           web_url?: string | null;

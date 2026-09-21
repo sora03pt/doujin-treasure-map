@@ -14,6 +14,7 @@ export type Circle = {
   imagePath: string | null;
   imageUrl: string | null;
   distributionPostUrl: string | null;
+  hall: string | null;
   spaceNumber: string | null;
   xUrl: string | null;
   webUrl: string | null;
@@ -27,6 +28,7 @@ export type Circle = {
 
 export type CircleFormValues = {
   name: string;
+  hall: string;
   spaceNumber: string;
   priority: CirclePriority;
   visitStatus: VisitStatus;
@@ -59,6 +61,7 @@ export type QuickVisitStatusState = {
 
 export type ValidatedCircleInput = {
   name: string;
+  hall: string | null;
   spaceNumber: string | null;
   priority: CirclePriority;
   visitStatus: VisitStatus;

@@ -49,7 +49,9 @@ test("mobile Event-day画面が横にはみ出さず主要操作を確保する"
   await page.goto(`/events/${event.id}`);
 
   await expect(page.getByRole("heading", { name: "予算サマリー" })).toBeVisible();
-  await expect(page.getByText("Mobile E2E Circle", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Mobile E2E Circle" }),
+  ).toBeVisible();
   await expect(page.getByRole("button", { name: "購入済み" })).toBeVisible();
 
   const hasHorizontalOverflow = await page.evaluate(
