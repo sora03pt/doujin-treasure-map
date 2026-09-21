@@ -10,6 +10,7 @@ import {
   removeReferenceImages,
   uploadReferenceImage,
 } from "@/features/images/storage";
+import { normalizeEventHalls } from "@/features/events/halls";
 import { createClient } from "@/lib/supabase/server";
 
 async function getAuthenticatedContext() {
@@ -32,7 +33,7 @@ async function getOwnedEvent(
 ) {
   const { data, error } = await context.supabase
     .from("events")
-    .select("id,halls")
+    .select("id,venue,halls")
     .eq("id", eventId)
     .eq("user_id", context.userId)
     .maybeSingle();
@@ -43,7 +44,10 @@ async function getOwnedEvent(
   }
 
   return data
-    ? { status: "owned" as const, halls: data.halls }
+    ? {
+        status: "owned" as const,
+        halls: normalizeEventHalls(data.venue, data.halls),
+      }
     : { status: "not_found" as const, halls: [] };
 }
 

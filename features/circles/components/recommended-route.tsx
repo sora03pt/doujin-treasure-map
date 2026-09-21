@@ -23,6 +23,9 @@ export function RecommendedRoute({ groups }: RecommendedRouteProps) {
           未訪問 {total}件
         </span>
       </div>
+      <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+        登録したホール・優先度・スペース番号順の目安です。
+      </p>
 
       {groups.length === 0 ? (
         <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">

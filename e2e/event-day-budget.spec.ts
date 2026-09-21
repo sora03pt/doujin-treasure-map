@@ -17,7 +17,11 @@ test("Circle・Item CRUD、filter、quick update、Budgetを連携できる", as
   page,
   seedEvent,
 }) => {
-  const event = await seedEvent({ halls: ["東1", "東2"], plannedBudget: 5_000 });
+  const event = await seedEvent({
+    halls: ["東1", "東2"],
+    plannedBudget: 5_000,
+    venue: "東京ビッグサイト",
+  });
   const circleName = `${e2ePrefix}Circle A`;
   const editedCircleName = `${circleName} edited`;
   const secondCircleName = `${e2ePrefix}Circle B`;

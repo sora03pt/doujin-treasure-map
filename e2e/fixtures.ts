@@ -11,6 +11,7 @@ type TestFixtures = {
     halls?: string[];
     name?: string;
     plannedBudget?: number | null;
+    venue?: string | null;
   }) => Promise<{ id: string; name: string }>;
 };
 
@@ -146,6 +147,7 @@ export const test = base.extend<TestFixtures>({
           event_date: "2026-09-01",
           halls: overrides.halls ?? [],
           planned_budget: overrides.plannedBudget ?? null,
+          venue: overrides.venue ?? null,
         })
         .select("id")
         .single();

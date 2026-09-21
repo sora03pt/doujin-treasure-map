@@ -6,6 +6,7 @@ import type {
   EventSummary,
   ValidatedEventInput,
 } from "@/features/events/types";
+import { normalizeEventHalls } from "@/features/events/halls";
 import { removeReferenceImages } from "@/features/images/storage";
 
 async function getAuthenticatedContext() {
@@ -55,7 +56,7 @@ function toEvent(row: {
     eventDate: row.event_date,
     plannedBudget: row.planned_budget,
     venue: row.venue,
-    halls: row.halls,
+    halls: normalizeEventHalls(row.venue, row.halls),
     memo: row.memo,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
